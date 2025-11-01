@@ -322,7 +322,7 @@
         const exhibitState = {
             amesRoom: { quizPassed: false, quizId: 'afterimageQuiz' },
             cafeWall: { quizPassed: false, quizId: 'fakeCafeWallQuiz' },
-            walkingFeet: { quizPassed: false, quizId: 'pogendorffQuiz' },
+            walkingFeet: { quizPassed: false, quizId: 'poggendorffQuiz' },
             amesWindow: { quizPassed: false, quizId: 'silencingQuiz' }
         };
         
@@ -839,7 +839,7 @@
             // Load the iframe src only when the quiz is shown
             if (quizId === 'fakeCafeWallQuiz') {
                 document.getElementById('fakeCafeWall-quiz-iframe').src = '../fakecafewall/index.html';
-            } else if (quizId === 'pogendorffQuiz') {
+            } else if (quizId === 'poggendorffQuiz') {
                 document.getElementById('pogendorff-quiz-iframe').src = '../pogendorff/index.html';
             } else if (quizId === 'silencingQuiz') {
                 document.getElementById('silencing-quiz-iframe').src = '../silencing/index.html';
