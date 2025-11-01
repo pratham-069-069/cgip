@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Illusion Museum - Hybrid 3D/2D Experience</title>
+    <title>Illusion Museum - Advanced 3D Experience</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -124,22 +124,7 @@
             50% { opacity: 1; }
         }
         
-        .cafe-wall-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 40px);
-            gap: 2px;
-            margin: 20px;
-        }
-        
-        .cafe-tile {
-            width: 40px;
-            height: 40px;
-        }
-        
-        .spiral-canvas {
-            border: 4px solid #fff;
-            border-radius: 50%;
-        }
+
         
         .timer {
             position: absolute;
@@ -246,10 +231,10 @@
         <!-- Interaction Prompt -->
         <div id="interact-prompt">Press [E] to Inspect Exhibit</div>
         
-        <!-- Gate Overlay (Afterimage Test) -->
-        <div id="gate-overlay" class="overlay">
-            <div id="gate-content" class="text-center">
-                <h2 class="text-4xl font-bold text-white mb-8">🚪 MUSEUM ENTRANCE TEST</h2>
+        <!-- Afterimage Quiz (Ames Room) -->
+        <div id="afterimageQuiz-overlay" class="overlay">
+            <div id="afterimage-content" class="text-center">
+                <h2 class="text-4xl font-bold text-white mb-8">🏛️ AMES ROOM QUIZ</h2>
                 <p class="text-xl text-white mb-8">Stare at the center of this flag for 20 seconds, then look at the white screen</p>
                 
                 <div id="afterimage-flag" class="afterimage-flag mx-auto mb-8">
@@ -266,60 +251,103 @@
                     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background: white; border-radius: 50%;"></div>
                 </div>
                 
-                <div id="gate-timer" class="timer">20</div>
+                <div id="afterimage-timer" class="timer">20</div>
             </div>
             
-            <div id="white-screen" style="display: none; background: white; width: 100%; height: 100%; position: relative;">
+            <div id="afterimage-white-screen" style="display: none; background: white; width: 100%; height: 100%; position: relative;">
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background: black; border-radius: 50%;"></div>
             </div>
             
-            <div id="gate-question" style="display: none;" class="question-container">
+            <div id="afterimage-question" style="display: none;" class="question-container">
                 <h3 class="text-2xl font-bold mb-6">What colors did you see in the afterimage?</h3>
                 <p class="mb-6">Look carefully at what appeared on the white screen</p>
                 <div class="flex flex-wrap justify-center">
-                    <button class="answer-btn bg-red-500 text-white" onclick="gateAnswer('red-blue-white')">Red, Blue & White</button>
-                    <button class="answer-btn bg-green-500 text-white" onclick="gateAnswer('green-yellow-black')">Green, Yellow & Black</button>
-                    <button class="answer-btn bg-purple-500 text-white" onclick="gateAnswer('purple-orange')">Purple & Orange</button>
-                    <button class="answer-btn bg-gray-500 text-white" onclick="gateAnswer('no-colors')">No Colors</button>
+                    <button class="answer-btn bg-red-500 text-white" onclick="quizAnswer('afterimage', 'red-blue-white')">Red, Blue & White</button>
+                    <button class="answer-btn bg-green-500 text-white" onclick="quizAnswer('afterimage', 'green-yellow-black')">Green, Yellow & Black</button>
+                    <button class="answer-btn bg-purple-500 text-white" onclick="quizAnswer('afterimage', 'purple-orange')">Purple & Orange</button>
+                    <button class="answer-btn bg-gray-500 text-white" onclick="quizAnswer('afterimage', 'no-colors')">No Colors</button>
                 </div>
                 <p class="text-sm mt-4 opacity-70">Hint: Afterimages show complementary colors</p>
             </div>
         </div>
-        
-        <!-- Café Wall Illusion Overlay -->
-        <div id="cafe-wall-overlay" class="overlay">
-            <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
-            <h2 class="text-4xl font-bold text-white mb-8">☕ CAFÉ WALL ILLUSION</h2>
-            <p class="text-xl text-white mb-8 text-center max-w-2xl">
-                The horizontal lines appear to be slanted, but they are perfectly parallel!<br/>
-                This illusion is caused by the offset pattern of black and white tiles.
-            </p>
-            <div id="cafe-wall-container" class="cafe-wall-grid"></div>
+
+        <!-- Poggendorff Quiz (Café Wall) -->
+        <div id="poggendorffQuiz-overlay" class="overlay">
+            <div class="question-container">
+                <h2 class="text-4xl font-bold text-white mb-8">☕ CAFÉ WALL QUIZ</h2>
+                <p class="text-xl text-white mb-8">Which line is continuous with the black line?</p>
+                
+                <div class="mb-8">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Crect width='400' height='200' fill='%23f0f0f0'/%3E%3Crect x='150' y='0' width='100' height='200' fill='%23888888'/%3E%3Cline x1='0' y1='75' x2='150' y2='100' stroke='black' stroke-width='4'/%3E%3Cline x1='250' y1='125' x2='400' y2='150' stroke='red' stroke-width='4'/%3E%3Cline x1='250' y1='75' x2='400' y2='100' stroke='blue' stroke-width='4'/%3E%3C/svg%3E" 
+                         alt="Poggendorff Illusion" style="width: 400px; height: 200px; border: 3px solid white;"/>
+                </div>
+                
+                <div class="flex justify-center gap-4">
+                    <button class="answer-btn bg-red-500 text-white" onclick="quizAnswer('poggendorff', 'red')">The Red Line</button>
+                    <button class="answer-btn bg-blue-500 text-white" onclick="quizAnswer('poggendorff', 'blue')">The Blue Line</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ebbinghaus Quiz (Walking Feet) -->
+        <div id="ebbinghausQuiz-overlay" class="overlay">
+            <div class="question-container">
+                <h2 class="text-4xl font-bold text-white mb-8">👣 WALKING FEET QUIZ</h2>
+                <p class="text-xl text-white mb-8">Are the two central orange circles the same size?</p>
+                
+                <div class="mb-8">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='300'%3E%3Crect width='600' height='300' fill='%23f0f0f0'/%3E%3C!-- Left side: large surrounding circles --%3E%3Ccircle cx='120' cy='150' r='30' fill='orange'/%3E%3Ccircle cx='60' cy='100' r='25' fill='%23666'/%3E%3Ccircle cx='180' cy='100' r='25' fill='%23666'/%3E%3Ccircle cx='60' cy='200' r='25' fill='%23666'/%3E%3Ccircle cx='180' cy='200' r='25' fill='%23666'/%3E%3Ccircle cx='90' cy='75' r='25' fill='%23666'/%3E%3Ccircle cx='150' cy='75' r='25' fill='%23666'/%3E%3C!-- Right side: small surrounding circles --%3E%3Ccircle cx='480' cy='150' r='30' fill='orange'/%3E%3Ccircle cx='440' cy='120' r='10' fill='%23666'/%3E%3Ccircle cx='520' cy='120' r='10' fill='%23666'/%3E%3Ccircle cx='440' cy='180' r='10' fill='%23666'/%3E%3Ccircle cx='520' cy='180' r='10' fill='%23666'/%3E%3Ccircle cx='450' cy='100' r='10' fill='%23666'/%3E%3Ccircle cx='510' cy='100' r='10' fill='%23666'/%3E%3Ccircle cx='450' cy='200' r='10' fill='%23666'/%3E%3Ccircle cx='510' cy='200' r='10' fill='%23666'/%3E%3C/svg%3E" 
+                         alt="Ebbinghaus Illusion" style="width: 600px; height: 300px; border: 3px solid white;"/>
+                </div>
+                
+                <div class="flex justify-center gap-4">
+                    <button class="answer-btn bg-green-500 text-white" onclick="quizAnswer('ebbinghaus', 'yes')">Yes, they are identical</button>
+                    <button class="answer-btn bg-red-500 text-white" onclick="quizAnswer('ebbinghaus', 'no')">No, the right one is bigger</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Squint Quiz (Ames Window) -->
+        <div id="squintQuiz-overlay" class="overlay">
+            <div class="question-container">
+                <h2 class="text-4xl font-bold text-white mb-8">🪟 AMES WINDOW QUIZ</h2>
+                <p class="text-xl text-white mb-8">What part of this image is really moving?</p>
+                
+                <div class="mb-8">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23000'/%3E%3Cg transform='translate(200,200)'%3E%3C!-- Rotating color wheel 1 --%3E%3Ccircle cx='-100' cy='-100' r='60' fill='%23ff0000' opacity='0.8'/%3E%3Ccircle cx='-100' cy='-100' r='40' fill='%23ffff00' opacity='0.8'/%3E%3Ccircle cx='-100' cy='-100' r='20' fill='%23ff0000' opacity='0.8'/%3E%3C!-- Static arrow --%3E%3Cpolygon points='-130,-100 -70,-100 -85,-85 -85,-95 -115,-95 -115,-105 -85,-105 -85,-115' fill='white'/%3E%3C!-- Rotating color wheel 2 --%3E%3Ccircle cx='100' cy='100' r='60' fill='%2300ff00' opacity='0.8'/%3E%3Ccircle cx='100' cy='100' r='40' fill='%230000ff' opacity='0.8'/%3E%3Ccircle cx='100' cy='100' r='20' fill='%2300ff00' opacity='0.8'/%3E%3C!-- Static arrow --%3E%3Cpolygon points='70,100 130,100 115,115 115,105 85,105 85,95 115,95 115,85' fill='white'/%3E%3C/g%3E%3C/svg%3E" 
+                         alt="Squint Motion Illusion" style="width: 400px; height: 400px; border: 3px solid white;"/>
+                </div>
+                
+                <div class="flex justify-center gap-4">
+                    <button class="answer-btn bg-purple-500 text-white" onclick="quizAnswer('squint', 'structure')">The whole structure is rotating</button>
+                    <button class="answer-btn bg-orange-500 text-white" onclick="quizAnswer('squint', 'colors')">Only the colors are rotating</button>
+                </div>
+            </div>
         </div>
         
-        <!-- Motion Aftereffect Overlay -->
-        <div id="motion-overlay" class="overlay">
-            <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
-            <h2 class="text-4xl font-bold text-white mb-8">🌀 MOTION AFTEREFFECT</h2>
-            <p class="text-xl text-white mb-8 text-center max-w-2xl">
-                Stare at the center of the spiral for 30 seconds, then look at the static image
-            </p>
-            <div id="motion-timer" class="timer" style="display: none;">30</div>
-            <canvas id="spiral-canvas" class="spiral-canvas" width="400" height="400"></canvas>
-            <img id="static-image" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23f0f0f0'/%3E%3Ctext x='200' y='200' text-anchor='middle' dy='.3em' font-size='24' fill='%23333'%3EStatic Image%3C/text%3E%3C/svg%3E" 
-                 style="display: none; width: 400px; height: 400px; border: 4px solid white;" alt="Static test image"/>
+        <!-- Main Illusion Overlays -->
+        <div id="amesRoom-main-overlay" class="overlay">
+            <div class="question-container">
+                <h2 class="text-4xl font-bold text-white mb-8">🏛️ Loading Ames Room...</h2>
+                <p class="text-2xl mb-4">This illusion is too powerful for an overlay!</p>
+                <p class="text-xl mb-8">Redirecting you to the main exhibit...</p>
+                <div class="animate-spin w-16 h-16 border-4 border-white border-t-transparent rounded-full mx-auto"></div>
+            </div>
         </div>
-        
-        <!-- Peripheral Drift Overlay -->
-        <div id="drift-overlay" class="overlay">
+
+        <div id="cafeWall-main-overlay" class="overlay">
             <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
-            <h2 class="text-4xl font-bold text-white mb-8">🐍 PERIPHERAL DRIFT ILLUSION</h2>
-            <p class="text-xl text-white mb-8 text-center max-w-2xl">
-                Look at the center and use your peripheral vision.<br/>
-                The snakes appear to rotate, but the image is completely static!
-            </p>
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cdefs%3E%3Cpattern id='drift' x='0' y='0' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Crect width='40' height='40' fill='%23000'/%3E%3Crect x='0' y='0' width='20' height='20' fill='%23fff'/%3E%3Crect x='20' y='20' width='20' height='20' fill='%23fff'/%3E%3C/pattern%3E%3C/defs%3E%3Ccircle cx='250' cy='250' r='200' fill='url(%23drift)' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='250' cy='250' r='10' fill='red'/%3E%3C/svg%3E" 
-                 style="width: 500px; height: 500px; border: 4px solid white;" alt="Rotating Snakes Illusion"/>
+            <iframe id="cafeWall-iframe" src="../cafewall/index.html" style="width: 90vw; height: 90vh; border: none; background: white;"></iframe>
+        </div>
+
+        <div id="walkingFeet-main-overlay" class="overlay">
+            <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
+            <iframe id="walkingFeet-iframe" src="../feet/index.html" style="width: 90vw; height: 90vh; border: none; background: white;"></iframe>
+        </div>
+
+        <div id="amesWindow-main-overlay" class="overlay">
+            <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
+            <iframe id="amesWindow-iframe" src="../window/index.html" style="width: 90vw; height: 90vh; border: none; background: white;"></iframe>
         </div>
     </div>
 
@@ -327,9 +355,15 @@
         // Global state
         let scene, camera, renderer, controls;
         let isPaused = true;
-        let isGatePassed = false;
         let currentExhibit = null;
-        let gateTargetIllusion = null;
+        
+        // Exhibit state management
+        const exhibitState = {
+            amesRoom: { quizPassed: false, quizId: 'afterimageQuiz' },
+            cafeWall: { quizPassed: false, quizId: 'poggendorffQuiz' },
+            walkingFeet: { quizPassed: false, quizId: 'ebbinghausQuiz' },
+            amesWindow: { quizPassed: false, quizId: 'squintQuiz' }
+        };
         
         // Movement
         const movement = {
@@ -392,93 +426,178 @@
         }
         
         function createMuseum() {
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-            scene.add(ambientLight);
+            // Enhanced Lighting
+            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+            scene.add(hemisphereLight);
             
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(10, 10, 5);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
-            scene.add(directionalLight);
+            // Create texture loader
+            const textureLoader = new THREE.TextureLoader();
             
-            // Floor
-            const floorGeometry = new THREE.PlaneGeometry(40, 40);
+            // Floor with marble texture
+            const floorGeometry = new THREE.PlaneGeometry(50, 50);
+            const floorTexture = createMarbleTexture();
             const floorMaterial = new THREE.MeshLambertMaterial({ 
-                color: 0x333333,
-                transparent: true,
-                opacity: 0.8
+                map: floorTexture,
+                color: 0x888888
             });
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
             floor.rotation.x = -Math.PI / 2;
             floor.receiveShadow = true;
             scene.add(floor);
             
-            // Walls
+            // Walls with brick texture
             createWalls();
             
-            // Create exhibit pedestals
-            createExhibit(-8, 0, -5, 'cafeWall', 0xff6b35, '☕ Café Wall');
-            createExhibit(8, 0, -5, 'motion', 0x4ecdc4, '🌀 Motion');
-            createExhibit(0, 0, -15, 'drift', 0x45b7d1, '🐍 Drift');
+            // Create exhibit doors
+            createExhibitDoor(-12, 0, -8, 'amesRoom', 0xffd700, '🏛️ Ames Room');
+            createExhibitDoor(12, 0, -8, 'cafeWall', 0xff6b35, '☕ Café Wall');
+            createExhibitDoor(-12, 0, 8, 'walkingFeet', 0x4ecdc4, '👣 Walking Feet');
+            createExhibitDoor(12, 0, 8, 'amesWindow', 0x45b7d1, '🪟 Ames Window');
             
-            // Add some atmospheric elements
+            // Add spotlights for each exhibit
+            createExhibitSpotlight(-12, 0, -8, 0xffd700);
+            createExhibitSpotlight(12, 0, -8, 0xff6b35);
+            createExhibitSpotlight(-12, 0, 8, 0x4ecdc4);
+            createExhibitSpotlight(12, 0, 8, 0x45b7d1);
+            
+            // Add atmospheric elements
             createAtmosphere();
+            createGrandEntrance();
         }
         
         function createWalls() {
-            const wallMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
+            const brickTexture = createBrickTexture();
+            const wallMaterial = new THREE.MeshLambertMaterial({ 
+                map: brickTexture,
+                color: 0x888888
+            });
             
             // Back wall
-            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), wallMaterial);
-            backWall.position.set(0, 5, -20);
+            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(50, 12), wallMaterial);
+            backWall.position.set(0, 6, -25);
             scene.add(backWall);
             
             // Side walls
-            const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), wallMaterial);
+            const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(50, 12), wallMaterial);
             leftWall.rotation.y = Math.PI / 2;
-            leftWall.position.set(-20, 5, 0);
+            leftWall.position.set(-25, 6, 0);
             scene.add(leftWall);
             
-            const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), wallMaterial);
+            const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(50, 12), wallMaterial);
             rightWall.rotation.y = -Math.PI / 2;
-            rightWall.position.set(20, 5, 0);
+            rightWall.position.set(25, 6, 0);
             scene.add(rightWall);
+            
+            // Front wall with entrance gap
+            const frontLeftWall = new THREE.Mesh(new THREE.PlaneGeometry(15, 12), wallMaterial);
+            frontLeftWall.position.set(-17.5, 6, 25);
+            frontLeftWall.rotation.y = Math.PI;
+            scene.add(frontLeftWall);
+            
+            const frontRightWall = new THREE.Mesh(new THREE.PlaneGeometry(15, 12), wallMaterial);
+            frontRightWall.position.set(17.5, 6, 25);
+            frontRightWall.rotation.y = Math.PI;
+            scene.add(frontRightWall);
         }
         
-        function createExhibit(x, y, z, id, color, label) {
-            // Pedestal
-            const pedestalGeometry = new THREE.BoxGeometry(3, 1, 3);
-            const pedestalMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
-            const pedestal = new THREE.Mesh(pedestalGeometry, pedestalMaterial);
-            pedestal.position.set(x, y + 0.5, z);
-            pedestal.castShadow = true;
-            pedestal.receiveShadow = true;
-            scene.add(pedestal);
+        function createBrickTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
             
-            // Exhibit object
-            const exhibitGeometry = new THREE.BoxGeometry(2, 2, 2);
-            const exhibitMaterial = new THREE.MeshLambertMaterial({ 
+            // Create brick pattern
+            context.fillStyle = '#8B4513';
+            context.fillRect(0, 0, 256, 256);
+            
+            context.fillStyle = '#A0522D';
+            for (let y = 0; y < 256; y += 32) {
+                for (let x = 0; x < 256; x += 64) {
+                    context.fillRect(x + (y % 64 === 0 ? 0 : 32), y, 60, 28);
+                }
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 2);
+            return texture;
+        }
+        
+        function createMarbleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
+            
+            // Create marble pattern
+            const gradient = context.createLinearGradient(0, 0, 256, 256);
+            gradient.addColorStop(0, '#f0f0f0');
+            gradient.addColorStop(0.3, '#e0e0e0');
+            gradient.addColorStop(0.7, '#d0d0d0');
+            gradient.addColorStop(1, '#c0c0c0');
+            
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 256, 256);
+            
+            // Add veining
+            context.strokeStyle = '#a0a0a0';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.moveTo(0, 100);
+            context.quadraticCurveTo(128, 150, 256, 120);
+            context.stroke();
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(8, 8);
+            return texture;
+        }
+        
+        function createExhibitDoor(x, y, z, id, color, label) {
+            // Door frame
+            const frameGeometry = new THREE.BoxGeometry(6, 8, 0.5);
+            const frameMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
+            const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+            frame.position.set(x, y + 4, z);
+            frame.castShadow = true;
+            scene.add(frame);
+            
+            // Door (glowing plane)
+            const doorGeometry = new THREE.PlaneGeometry(5, 7);
+            const doorMaterial = new THREE.MeshLambertMaterial({ 
                 color: color,
                 transparent: true,
-                opacity: 0.8
+                opacity: 0.8,
+                emissive: color,
+                emissiveIntensity: 0.2
             });
-            const exhibit = new THREE.Mesh(exhibitGeometry, exhibitMaterial);
-            exhibit.position.set(x, y + 2, z);
-            exhibit.userData = { id: id, label: label };
-            exhibit.castShadow = true;
+            const door = new THREE.Mesh(doorGeometry, doorMaterial);
+            door.position.set(x, y + 4, z + 0.1);
+            door.userData = { id: id, label: label };
+            door.castShadow = true;
             
-            // Add floating animation
-            const originalY = exhibit.position.y;
-            exhibit.userData.originalY = originalY;
-            exhibit.userData.time = Math.random() * Math.PI * 2;
+            // Add pulsing animation
+            const originalIntensity = 0.2;
+            door.userData.originalIntensity = originalIntensity;
+            door.userData.time = Math.random() * Math.PI * 2;
             
-            scene.add(exhibit);
-            exhibits.push(exhibit);
+            scene.add(door);
+            exhibits.push(door);
             
-            // Add label above exhibit
-            createExhibitLabel(x, y + 4, z, label);
+            // Add label above door
+            createExhibitLabel(x, y + 8.5, z, label);
+        }
+        
+        function createExhibitSpotlight(x, y, z, color) {
+            const spotlight = new THREE.SpotLight(color, 1.0, 30, Math.PI / 6, 0.5);
+            spotlight.position.set(x, 10, z);
+            spotlight.target.position.set(x, 0, z);
+            spotlight.castShadow = true;
+            spotlight.shadow.mapSize.width = 1024;
+            spotlight.shadow.mapSize.height = 1024;
+            
+            scene.add(spotlight);
+            scene.add(spotlight.target);
         }
         
         function createExhibitLabel(x, y, z, text) {
@@ -508,24 +627,83 @@
         }
         
         function createAtmosphere() {
-            // Add some floating particles
-            const particleCount = 50;
+            // Corner pillars
+            const pillarGeometry = new THREE.BoxGeometry(2, 12, 2);
+            const pillarMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+            
+            const pillarPositions = [
+                [-22, 6, -22], [22, 6, -22], [-22, 6, 22], [22, 6, 22]
+            ];
+            
+            pillarPositions.forEach(pos => {
+                const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+                pillar.position.set(pos[0], pos[1], pos[2]);
+                pillar.castShadow = true;
+                pillar.receiveShadow = true;
+                scene.add(pillar);
+            });
+            
+            // Central benches
+            const benchGeometry = new THREE.BoxGeometry(4, 1, 1.5);
+            const benchMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            
+            const bench1 = new THREE.Mesh(benchGeometry, benchMaterial);
+            bench1.position.set(-3, 0.5, 0);
+            bench1.castShadow = true;
+            bench1.receiveShadow = true;
+            scene.add(bench1);
+            
+            const bench2 = new THREE.Mesh(benchGeometry, benchMaterial);
+            bench2.position.set(3, 0.5, 0);
+            bench2.castShadow = true;
+            bench2.receiveShadow = true;
+            scene.add(bench2);
+            
+            // Floating particles
+            const particleCount = 100;
             const particles = new THREE.BufferGeometry();
             const positions = new Float32Array(particleCount * 3);
             
             for (let i = 0; i < particleCount * 3; i++) {
-                positions[i] = (Math.random() - 0.5) * 40;
+                positions[i] = (Math.random() - 0.5) * 50;
             }
             
             particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             
             const particleMaterial = new THREE.PointsMaterial({
-                color: 0x888888,
-                size: 0.1
+                color: 0xffffff,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.6
             });
             
             const particleSystem = new THREE.Points(particles, particleMaterial);
             scene.add(particleSystem);
+        }
+        
+        function createGrandEntrance() {
+            // Grand archway
+            const archGeometry = new THREE.TorusGeometry(5, 1, 8, 16, Math.PI);
+            const archMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            const arch = new THREE.Mesh(archGeometry, archMaterial);
+            arch.position.set(0, 8, 20);
+            arch.rotation.x = Math.PI;
+            arch.castShadow = true;
+            scene.add(arch);
+            
+            // Entrance columns
+            const columnGeometry = new THREE.CylinderGeometry(1, 1, 10, 12);
+            const columnMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            
+            const leftColumn = new THREE.Mesh(columnGeometry, columnMaterial);
+            leftColumn.position.set(-6, 5, 20);
+            leftColumn.castShadow = true;
+            scene.add(leftColumn);
+            
+            const rightColumn = new THREE.Mesh(columnGeometry, columnMaterial);
+            rightColumn.position.set(6, 5, 20);
+            rightColumn.castShadow = true;
+            scene.add(rightColumn);
         }
         
         function animate() {
@@ -540,11 +718,12 @@
             // Update movement
             updateMovement(delta);
             
-            // Animate exhibits
+            // Animate exhibit doors
             exhibits.forEach(exhibit => {
                 exhibit.userData.time += delta;
-                exhibit.position.y = exhibit.userData.originalY + Math.sin(exhibit.userData.time) * 0.2;
-                exhibit.rotation.y += delta * 0.5;
+                // Pulsing glow effect
+                const intensity = exhibit.userData.originalIntensity + Math.sin(exhibit.userData.time * 2) * 0.1;
+                exhibit.material.emissiveIntensity = Math.max(0, intensity);
             });
             
             // Check for interactions
@@ -594,171 +773,176 @@
         function showIllusion(id) {
             isPaused = true;
             
-            if (!isGatePassed) {
-                gateTargetIllusion = id;
-                showGate();
+            // Check if quiz is passed for this exhibit
+            if (exhibitState[id] && exhibitState[id].quizPassed) {
+                showMainIllusion(id);
+            } else if (exhibitState[id]) {
+                // Show the quiz first
+                showQuiz(exhibitState[id].quizId);
+            } else {
+                console.error('Unknown exhibit:', id);
+                isPaused = false;
+            }
+        }
+        
+        function showMainIllusion(id) {
+            // Special case for Ames Room - redirect to main exhibit
+            if (id === 'amesRoom') {
+                document.getElementById('amesRoom-main-overlay').classList.add('active');
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 3000);
                 return;
             }
             
-            switch(id) {
-                case 'cafeWall':
-                    renderCafeWall();
-                    document.getElementById('cafe-wall-overlay').classList.add('active');
-                    break;
-                case 'motion':
-                    startMotionAftereffect();
-                    document.getElementById('motion-overlay').classList.add('active');
-                    break;
-                case 'drift':
-                    document.getElementById('drift-overlay').classList.add('active');
-                    break;
+            // Show the main illusion overlay
+            const overlay = document.getElementById(id + '-main-overlay');
+            if (overlay) {
+                overlay.classList.add('active');
+                
+                // Load iframe content
+                const iframe = document.getElementById(id + '-iframe');
+                if (iframe && !iframe.src) {
+                    switch(id) {
+                        case 'cafeWall':
+                            iframe.src = '../cafewall/index.html';
+                            break;
+                        case 'walkingFeet':
+                            iframe.src = '../feet/index.html';
+                            break;
+                        case 'amesWindow':
+                            iframe.src = '../window/index.html';
+                            break;
+                    }
+                }
             }
         }
         
         function hideIllusion() {
+            // Hide all overlays
             document.querySelectorAll('.overlay').forEach(overlay => {
                 overlay.classList.remove('active');
             });
+            
+            // Clear and reset all iframes to stop background processing
+            const iframes = ['cafeWall-iframe', 'walkingFeet-iframe', 'amesWindow-iframe'];
+            iframes.forEach(iframeId => {
+                const iframe = document.getElementById(iframeId);
+                if (iframe) {
+                    const originalSrc = iframe.src;
+                    iframe.src = '';
+                    // Reset after a brief moment
+                    setTimeout(() => {
+                        iframe.src = originalSrc;
+                    }, 100);
+                }
+            });
+            
             controls.lock();
         }
         
-        function showGate() {
-            document.getElementById('gate-overlay').classList.add('active');
+        function showQuiz(quizId) {
+            const overlayId = quizId + '-overlay';
+            const overlay = document.getElementById(overlayId);
             
-            let countdown = 20;
-            const timer = document.getElementById('gate-timer');
-            
-            const interval = setInterval(() => {
-                countdown--;
-                timer.textContent = countdown;
-                
-                if (countdown <= 0) {
-                    clearInterval(interval);
-                    document.getElementById('gate-content').style.display = 'none';
-                    document.getElementById('white-screen').style.display = 'block';
-                    
-                    setTimeout(() => {
-                        document.getElementById('white-screen').style.display = 'none';
-                        document.getElementById('gate-question').style.display = 'block';
-                    }, 3000);
-                }
-            }, 1000);
-        }
-        
-        function gateAnswer(answer) {
-            if (answer === 'red-blue-white') {
-                isGatePassed = true;
-                document.getElementById('gate-overlay').classList.remove('active');
-                
-                // Reset gate for next time
-                document.getElementById('gate-content').style.display = 'block';
-                document.getElementById('white-screen').style.display = 'none';
-                document.getElementById('gate-question').style.display = 'none';
-                document.getElementById('gate-timer').textContent = '20';
-                
-                // Show the originally requested illusion
-                if (gateTargetIllusion) {
-                    showIllusion(gateTargetIllusion);
-                    gateTargetIllusion = null;
-                } else {
-                    controls.lock();
-                }
-            } else {
-                alert('Incorrect! The afterimage shows complementary colors: Red, Blue & White. Try again!');
+            if (!overlay) {
+                console.error('Quiz overlay not found:', overlayId);
+                return;
             }
-        }
-        
-        function renderCafeWall() {
-            const container = document.getElementById('cafe-wall-container');
-            container.innerHTML = '';
             
-            const rows = 8;
-            const cols = 12;
+            overlay.classList.add('active');
             
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    const tile = document.createElement('div');
-                    tile.className = 'cafe-tile';
-                    
-                    // Offset every other row
-                    const offset = row % 2 === 1;
-                    const adjustedCol = offset ? (col + 0.5) % cols : col;
-                    
-                    // Checkerboard pattern
-                    const isBlack = (Math.floor(adjustedCol) + row) % 2 === 0;
-                    tile.style.backgroundColor = isBlack ? '#000' : '#fff';
-                    
-                    // Add gray mortar lines effect
-                    tile.style.border = '1px solid #888';
-                    
-                    container.appendChild(tile);
-                }
-            }
-        }
-        
-        function startMotionAftereffect() {
-            const canvas = document.getElementById('spiral-canvas');
-            const ctx = canvas.getContext('2d');
-            const staticImage = document.getElementById('static-image');
-            const timer = document.getElementById('motion-timer');
-            
-            canvas.style.display = 'block';
-            staticImage.style.display = 'none';
-            timer.style.display = 'block';
-            
-            let angle = 0;
-            let countdown = 30;
-            timer.textContent = countdown;
-            
-            const countdownInterval = setInterval(() => {
-                countdown--;
-                timer.textContent = countdown;
+            // Special handling for afterimage quiz
+            if (quizId === 'afterimageQuiz') {
+                let countdown = 20;
+                const timer = document.getElementById('afterimage-timer');
                 
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
-                    clearInterval(spiralInterval);
-                    canvas.style.display = 'none';
-                    staticImage.style.display = 'block';
-                    timer.style.display = 'none';
-                }
-            }, 1000);
-            
-            const spiralInterval = setInterval(() => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.save();
-                ctx.translate(canvas.width / 2, canvas.height / 2);
-                ctx.rotate(angle);
-                
-                // Draw spiral
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                
-                for (let i = 0; i < 1000; i++) {
-                    const radius = i * 0.2;
-                    const theta = i * 0.1;
-                    const x = radius * Math.cos(theta);
-                    const y = radius * Math.sin(theta);
+                const interval = setInterval(() => {
+                    countdown--;
+                    timer.textContent = countdown;
                     
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
+                    if (countdown <= 0) {
+                        clearInterval(interval);
+                        document.getElementById('afterimage-content').style.display = 'none';
+                        document.getElementById('afterimage-white-screen').style.display = 'block';
+                        
+                        setTimeout(() => {
+                            document.getElementById('afterimage-white-screen').style.display = 'none';
+                            document.getElementById('afterimage-question').style.display = 'block';
+                        }, 3000);
                     }
+                }, 1000);
+            }
+        }
+        
+        function quizAnswer(quizName, answer) {
+            let isCorrect = false;
+            let exhibitId = null;
+            
+            // Check answers for each quiz
+            switch(quizName) {
+                case 'afterimage':
+                    isCorrect = (answer === 'red-blue-white');
+                    exhibitId = 'amesRoom';
+                    break;
+                case 'poggendorff':
+                    isCorrect = (answer === 'red');
+                    exhibitId = 'cafeWall';
+                    break;
+                case 'ebbinghaus':
+                    isCorrect = (answer === 'yes');
+                    exhibitId = 'walkingFeet';
+                    break;
+                case 'squint':
+                    isCorrect = (answer === 'colors');
+                    exhibitId = 'amesWindow';
+                    break;
+            }
+            
+            if (isCorrect && exhibitId) {
+                // Mark quiz as passed
+                exhibitState[exhibitId].quizPassed = true;
+                
+                // Hide quiz overlay
+                const quizOverlay = document.getElementById(exhibitState[exhibitId].quizId + '-overlay');
+                if (quizOverlay) {
+                    quizOverlay.classList.remove('active');
                 }
                 
-                ctx.stroke();
-                ctx.restore();
+                // Reset afterimage quiz elements
+                if (quizName === 'afterimage') {
+                    document.getElementById('afterimage-content').style.display = 'block';
+                    document.getElementById('afterimage-white-screen').style.display = 'none';
+                    document.getElementById('afterimage-question').style.display = 'none';
+                    document.getElementById('afterimage-timer').textContent = '20';
+                }
                 
-                // Center dot
-                ctx.fillStyle = '#ff0000';
-                ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, Math.PI * 2);
-                ctx.fill();
+                // Show success message and main illusion
+                alert('Correct! The exhibit is now unlocked!');
+                showMainIllusion(exhibitId);
                 
-                angle += 0.1;
-            }, 50);
+            } else {
+                // Wrong answer
+                let hint = '';
+                switch(quizName) {
+                    case 'afterimage':
+                        hint = 'The afterimage shows complementary colors: Red, Blue & White.';
+                        break;
+                    case 'poggendorff':
+                        hint = 'Look carefully - the red line is actually continuous with the black line.';
+                        break;
+                    case 'ebbinghaus':
+                        hint = 'Despite appearances, both orange circles are exactly the same size!';
+                        break;
+                    case 'squint':
+                        hint = 'Only the colors are rotating - the structure itself is static.';
+                        break;
+                }
+                alert('Incorrect! ' + hint + ' Try again!');
+            }
         }
+        
+
         
         function onKeyDown(event) {
             switch (event.code) {
