@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Illusion Museum - Hybrid 3D/2D Experience</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: #000;
+        }
+        
+        #three-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            pointer-events: all;
+        }
+        
+        .overlay.active {
+            display: flex;
+        }
+        
+        #blocker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            pointer-events: all;
+        }
+        
+        .crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            z-index: 50;
+            pointer-events: none;
+        }
+        
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255,255,255,0.8);
+        }
+        
+        .crosshair::before {
+            top: 50%;
+            left: 2px;
+            right: 2px;
+            height: 2px;
+            transform: translateY(-50%);
+        }
+        
+        .crosshair::after {
+            left: 50%;
+            top: 2px;
+            bottom: 2px;
+            width: 2px;
+            transform: translateX(-50%);
+        }
+        
+        #interact-prompt {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            border: 2px solid rgba(255,255,255,0.3);
+            font-size: 18px;
+            display: none;
+            z-index: 50;
+            pointer-events: none;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        .cafe-wall-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 40px);
+            gap: 2px;
+            margin: 20px;
+        }
+        
+        .cafe-tile {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .spiral-canvas {
+            border: 4px solid #fff;
+            border-radius: 50%;
+        }
+        
+        .timer {
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .afterimage-flag {
+            width: 300px;
+            height: 200px;
+            position: relative;
+            border: 3px solid white;
+        }
+        
+        .flag-section {
+            position: absolute;
+            width: 100px;
+            height: 66.67px;
+        }
+        
+        .green { background-color: #00ff00; }
+        .yellow { background-color: #ffff00; }
+        .black { background-color: #000000; }
+        
+        .question-container {
+            background: rgba(255,255,255,0.95);
+            color: black;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 600px;
+        }
+        
+        .answer-btn {
+            margin: 10px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .answer-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .return-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.9);
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .return-btn:hover {
+            background: rgba(255,255,255,1);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- 3D Canvas -->
+    <canvas id="three-canvas"></canvas>
+    
+    <!-- UI Layer -->
+    <div class="ui-layer">
+        <!-- Pointer Lock Blocker -->
+        <div id="blocker">
+            <div class="text-center text-white">
+                <h1 class="text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                    🎭 ILLUSION MUSEUM
+                </h1>
+                <p class="text-2xl mb-4">A Hybrid 3D/2D Experience</p>
+                <p class="text-lg mb-8 opacity-80">Explore optical illusions in an immersive virtual gallery</p>
+                <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-8 max-w-lg">
+                    <p class="text-xl mb-4">🎮 <strong>Click to Enter</strong></p>
+                    <div class="text-sm space-y-2 opacity-90">
+                        <p>• <strong>WASD:</strong> Move around</p>
+                        <p>• <strong>Mouse:</strong> Look around</p>
+                        <p>• <strong>E:</strong> Interact with exhibits</p>
+                        <p>• <strong>ESC:</strong> Return to menu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Crosshair -->
+        <div class="crosshair"></div>
+        
+        <!-- Interaction Prompt -->
+        <div id="interact-prompt">Press [E] to Inspect Exhibit</div>
+        
+        <!-- Gate Overlay (Afterimage Test) -->
+        <div id="gate-overlay" class="overlay">
+            <div id="gate-content" class="text-center">
+                <h2 class="text-4xl font-bold text-white mb-8">🚪 MUSEUM ENTRANCE TEST</h2>
+                <p class="text-xl text-white mb-8">Stare at the center of this flag for 20 seconds, then look at the white screen</p>
+                
+                <div id="afterimage-flag" class="afterimage-flag mx-auto mb-8">
+                    <div class="flag-section green" style="top: 0; left: 0;"></div>
+                    <div class="flag-section yellow" style="top: 0; left: 100px;"></div>
+                    <div class="flag-section green" style="top: 0; right: 0;"></div>
+                    <div class="flag-section black" style="top: 66.67px; left: 0;"></div>
+                    <div class="flag-section green" style="top: 66.67px; left: 100px;"></div>
+                    <div class="flag-section black" style="top: 66.67px; right: 0;"></div>
+                    <div class="flag-section green" style="bottom: 0; left: 0;"></div>
+                    <div class="flag-section yellow" style="bottom: 0; left: 100px;"></div>
+                    <div class="flag-section green" style="bottom: 0; right: 0;"></div>
+                    <!-- Center fixation point -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background: white; border-radius: 50%;"></div>
+                </div>
+                
+                <div id="gate-timer" class="timer">20</div>
+            </div>
+            
+            <div id="white-screen" style="display: none; background: white; width: 100%; height: 100%; position: relative;">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background: black; border-radius: 50%;"></div>
+            </div>
+            
+            <div id="gate-question" style="display: none;" class="question-container">
+                <h3 class="text-2xl font-bold mb-6">What colors did you see in the afterimage?</h3>
+                <p class="mb-6">Look carefully at what appeared on the white screen</p>
+                <div class="flex flex-wrap justify-center">
+                    <button class="answer-btn bg-red-500 text-white" onclick="gateAnswer('red-blue-white')">Red, Blue & White</button>
+                    <button class="answer-btn bg-green-500 text-white" onclick="gateAnswer('green-yellow-black')">Green, Yellow & Black</button>
+                    <button class="answer-btn bg-purple-500 text-white" onclick="gateAnswer('purple-orange')">Purple & Orange</button>
+                    <button class="answer-btn bg-gray-500 text-white" onclick="gateAnswer('no-colors')">No Colors</button>
+                </div>
+                <p class="text-sm mt-4 opacity-70">Hint: Afterimages show complementary colors</p>
+            </div>
+        </div>
+        
+        <!-- Café Wall Illusion Overlay -->
+        <div id="cafe-wall-overlay" class="overlay">
+            <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
+            <h2 class="text-4xl font-bold text-white mb-8">☕ CAFÉ WALL ILLUSION</h2>
+            <p class="text-xl text-white mb-8 text-center max-w-2xl">
+                The horizontal lines appear to be slanted, but they are perfectly parallel!<br/>
+                This illusion is caused by the offset pattern of black and white tiles.
+            </p>
+            <div id="cafe-wall-container" class="cafe-wall-grid"></div>
+        </div>
+        
+        <!-- Motion Aftereffect Overlay -->
+        <div id="motion-overlay" class="overlay">
+            <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
+            <h2 class="text-4xl font-bold text-white mb-8">🌀 MOTION AFTEREFFECT</h2>
+            <p class="text-xl text-white mb-8 text-center max-w-2xl">
+                Stare at the center of the spiral for 30 seconds, then look at the static image
+            </p>
+            <div id="motion-timer" class="timer" style="display: none;">30</div>
+            <canvas id="spiral-canvas" class="spiral-canvas" width="400" height="400"></canvas>
+            <img id="static-image" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23f0f0f0'/%3E%3Ctext x='200' y='200' text-anchor='middle' dy='.3em' font-size='24' fill='%23333'%3EStatic Image%3C/text%3E%3C/svg%3E" 
+                 style="display: none; width: 400px; height: 400px; border: 4px solid white;" alt="Static test image"/>
+        </div>
+        
+        <!-- Peripheral Drift Overlay -->
+        <div id="drift-overlay" class="overlay">
+            <button class="return-btn" onclick="hideIllusion()">← Return to Museum</button>
+            <h2 class="text-4xl font-bold text-white mb-8">🐍 PERIPHERAL DRIFT ILLUSION</h2>
+            <p class="text-xl text-white mb-8 text-center max-w-2xl">
+                Look at the center and use your peripheral vision.<br/>
+                The snakes appear to rotate, but the image is completely static!
+            </p>
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cdefs%3E%3Cpattern id='drift' x='0' y='0' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Crect width='40' height='40' fill='%23000'/%3E%3Crect x='0' y='0' width='20' height='20' fill='%23fff'/%3E%3Crect x='20' y='20' width='20' height='20' fill='%23fff'/%3E%3C/pattern%3E%3C/defs%3E%3Ccircle cx='250' cy='250' r='200' fill='url(%23drift)' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='250' cy='250' r='10' fill='red'/%3E%3C/svg%3E" 
+                 style="width: 500px; height: 500px; border: 4px solid white;" alt="Rotating Snakes Illusion"/>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let scene, camera, renderer, controls;
+        let isPaused = true;
+        let isGatePassed = false;
+        let currentExhibit = null;
+        let gateTargetIllusion = null;
+        
+        // Movement
+        const movement = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false
+        };
+        
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        const clock = new THREE.Clock();
+        
+        // DOM elements
+        const blocker = document.getElementById('blocker');
+        const interactPrompt = document.getElementById('interact-prompt');
+        
+        // Exhibits array
+        const exhibits = [];
+        
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x222222);
+            scene.fog = new THREE.Fog(0x222222, 10, 50);
+            
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 10);
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Controls setup
+            controls = new THREE.PointerLockControls(camera, document.body);
+            scene.add(controls.getObject());
+            
+            // Controls event listeners
+            controls.addEventListener('lock', () => {
+                blocker.style.display = 'none';
+                isPaused = false;
+                animate();
+            });
+            
+            // Create the museum
+            createMuseum();
+            
+            // Event listeners
+            blocker.addEventListener('click', () => {
+                controls.lock();
+            });
+            
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function createMuseum() {
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            // Floor
+            const floorGeometry = new THREE.PlaneGeometry(40, 40);
+            const floorMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x333333,
+                transparent: true,
+                opacity: 0.8
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+            
+            // Walls
+            createWalls();
+            
+            // Create exhibit pedestals
+            createExhibit(-8, 0, -5, 'cafeWall', 0xff6b35, '☕ Café Wall');
+            createExhibit(8, 0, -5, 'motion', 0x4ecdc4, '🌀 Motion');
+            createExhibit(0, 0, -15, 'drift', 0x45b7d1, '🐍 Drift');
+            
+            // Add some atmospheric elements
+            createAtmosphere();
+        }
+        
+        function createWalls() {
+            const wallMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
+            
+            // Back wall
+            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), wallMaterial);
+            backWall.position.set(0, 5, -20);
+            scene.add(backWall);
+            
+            // Side walls
+            const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), wallMaterial);
+            leftWall.rotation.y = Math.PI / 2;
+            leftWall.position.set(-20, 5, 0);
+            scene.add(leftWall);
+            
+            const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), wallMaterial);
+            rightWall.rotation.y = -Math.PI / 2;
+            rightWall.position.set(20, 5, 0);
+            scene.add(rightWall);
+        }
+        
+        function createExhibit(x, y, z, id, color, label) {
+            // Pedestal
+            const pedestalGeometry = new THREE.BoxGeometry(3, 1, 3);
+            const pedestalMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+            const pedestal = new THREE.Mesh(pedestalGeometry, pedestalMaterial);
+            pedestal.position.set(x, y + 0.5, z);
+            pedestal.castShadow = true;
+            pedestal.receiveShadow = true;
+            scene.add(pedestal);
+            
+            // Exhibit object
+            const exhibitGeometry = new THREE.BoxGeometry(2, 2, 2);
+            const exhibitMaterial = new THREE.MeshLambertMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.8
+            });
+            const exhibit = new THREE.Mesh(exhibitGeometry, exhibitMaterial);
+            exhibit.position.set(x, y + 2, z);
+            exhibit.userData = { id: id, label: label };
+            exhibit.castShadow = true;
+            
+            // Add floating animation
+            const originalY = exhibit.position.y;
+            exhibit.userData.originalY = originalY;
+            exhibit.userData.time = Math.random() * Math.PI * 2;
+            
+            scene.add(exhibit);
+            exhibits.push(exhibit);
+            
+            // Add label above exhibit
+            createExhibitLabel(x, y + 4, z, label);
+        }
+        
+        function createExhibitLabel(x, y, z, text) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 64;
+            
+            context.fillStyle = 'rgba(0,0,0,0.8)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            context.fillStyle = 'white';
+            context.font = '24px Arial';
+            context.textAlign = 'center';
+            context.fillText(text, canvas.width / 2, canvas.height / 2 + 8);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const labelMaterial = new THREE.MeshBasicMaterial({ 
+                map: texture, 
+                transparent: true 
+            });
+            const labelGeometry = new THREE.PlaneGeometry(4, 1);
+            const label = new THREE.Mesh(labelGeometry, labelMaterial);
+            label.position.set(x, y, z);
+            
+            scene.add(label);
+        }
+        
+        function createAtmosphere() {
+            // Add some floating particles
+            const particleCount = 50;
+            const particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 40;
+            }
+            
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0x888888,
+                size: 0.1
+            });
+            
+            const particleSystem = new THREE.Points(particles, particleMaterial);
+            scene.add(particleSystem);
+        }
+        
+        function animate() {
+            if (isPaused) return;
+            
+            requestAnimationFrame(animate);
+            
+            // Get delta, but cap it at a max of 0.1s (10 FPS)
+            // This prevents a huge delta spike after unpausing
+            const delta = Math.min(clock.getDelta(), 0.1);
+            
+            // Update movement
+            updateMovement(delta);
+            
+            // Animate exhibits
+            exhibits.forEach(exhibit => {
+                exhibit.userData.time += delta;
+                exhibit.position.y = exhibit.userData.originalY + Math.sin(exhibit.userData.time) * 0.2;
+                exhibit.rotation.y += delta * 0.5;
+            });
+            
+            // Check for interactions
+            checkInteraction();
+            
+            renderer.render(scene, camera);
+        }
+        
+        function updateMovement(delta) {
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+            
+            direction.z = Number(movement.forward) - Number(movement.backward);
+            direction.x = Number(movement.right) - Number(movement.left);
+            direction.normalize();
+            
+            if (movement.forward || movement.backward) velocity.z -= direction.z * 20.0 * delta;
+            if (movement.left || movement.right) velocity.x -= direction.x * 20.0 * delta;
+            
+            controls.moveRight(-velocity.x * delta);
+            controls.moveForward(-velocity.z * delta);
+        }
+        
+        function checkInteraction() {
+            const playerPosition = controls.getObject().position;
+            let closestExhibit = null;
+            let closestDistance = Infinity;
+            
+            exhibits.forEach(exhibit => {
+                const distance = playerPosition.distanceTo(exhibit.position);
+                if (distance < 5 && distance < closestDistance) {
+                    closestDistance = distance;
+                    closestExhibit = exhibit;
+                }
+            });
+            
+            if (closestExhibit) {
+                currentExhibit = closestExhibit;
+                interactPrompt.style.display = 'block';
+                interactPrompt.textContent = `Press [E] to inspect ${closestExhibit.userData.label}`;
+            } else {
+                currentExhibit = null;
+                interactPrompt.style.display = 'none';
+            }
+        }
+        
+        function showIllusion(id) {
+            isPaused = true;
+            
+            if (!isGatePassed) {
+                gateTargetIllusion = id;
+                showGate();
+                return;
+            }
+            
+            switch(id) {
+                case 'cafeWall':
+                    renderCafeWall();
+                    document.getElementById('cafe-wall-overlay').classList.add('active');
+                    break;
+                case 'motion':
+                    startMotionAftereffect();
+                    document.getElementById('motion-overlay').classList.add('active');
+                    break;
+                case 'drift':
+                    document.getElementById('drift-overlay').classList.add('active');
+                    break;
+            }
+        }
+        
+        function hideIllusion() {
+            document.querySelectorAll('.overlay').forEach(overlay => {
+                overlay.classList.remove('active');
+            });
+            controls.lock();
+        }
+        
+        function showGate() {
+            document.getElementById('gate-overlay').classList.add('active');
+            
+            let countdown = 20;
+            const timer = document.getElementById('gate-timer');
+            
+            const interval = setInterval(() => {
+                countdown--;
+                timer.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    document.getElementById('gate-content').style.display = 'none';
+                    document.getElementById('white-screen').style.display = 'block';
+                    
+                    setTimeout(() => {
+                        document.getElementById('white-screen').style.display = 'none';
+                        document.getElementById('gate-question').style.display = 'block';
+                    }, 3000);
+                }
+            }, 1000);
+        }
+        
+        function gateAnswer(answer) {
+            if (answer === 'red-blue-white') {
+                isGatePassed = true;
+                document.getElementById('gate-overlay').classList.remove('active');
+                
+                // Reset gate for next time
+                document.getElementById('gate-content').style.display = 'block';
+                document.getElementById('white-screen').style.display = 'none';
+                document.getElementById('gate-question').style.display = 'none';
+                document.getElementById('gate-timer').textContent = '20';
+                
+                // Show the originally requested illusion
+                if (gateTargetIllusion) {
+                    showIllusion(gateTargetIllusion);
+                    gateTargetIllusion = null;
+                } else {
+                    controls.lock();
+                }
+            } else {
+                alert('Incorrect! The afterimage shows complementary colors: Red, Blue & White. Try again!');
+            }
+        }
+        
+        function renderCafeWall() {
+            const container = document.getElementById('cafe-wall-container');
+            container.innerHTML = '';
+            
+            const rows = 8;
+            const cols = 12;
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'cafe-tile';
+                    
+                    // Offset every other row
+                    const offset = row % 2 === 1;
+                    const adjustedCol = offset ? (col + 0.5) % cols : col;
+                    
+                    // Checkerboard pattern
+                    const isBlack = (Math.floor(adjustedCol) + row) % 2 === 0;
+                    tile.style.backgroundColor = isBlack ? '#000' : '#fff';
+                    
+                    // Add gray mortar lines effect
+                    tile.style.border = '1px solid #888';
+                    
+                    container.appendChild(tile);
+                }
+            }
+        }
+        
+        function startMotionAftereffect() {
+            const canvas = document.getElementById('spiral-canvas');
+            const ctx = canvas.getContext('2d');
+            const staticImage = document.getElementById('static-image');
+            const timer = document.getElementById('motion-timer');
+            
+            canvas.style.display = 'block';
+            staticImage.style.display = 'none';
+            timer.style.display = 'block';
+            
+            let angle = 0;
+            let countdown = 30;
+            timer.textContent = countdown;
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                timer.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    clearInterval(spiralInterval);
+                    canvas.style.display = 'none';
+                    staticImage.style.display = 'block';
+                    timer.style.display = 'none';
+                }
+            }, 1000);
+            
+            const spiralInterval = setInterval(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(angle);
+                
+                // Draw spiral
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                for (let i = 0; i < 1000; i++) {
+                    const radius = i * 0.2;
+                    const theta = i * 0.1;
+                    const x = radius * Math.cos(theta);
+                    const y = radius * Math.sin(theta);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.stroke();
+                ctx.restore();
+                
+                // Center dot
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                angle += 0.1;
+            }, 50);
+        }
+        
+        function onKeyDown(event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    movement.forward = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    movement.left = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    movement.backward = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    movement.right = true;
+                    break;
+                case 'KeyE':
+                    if (currentExhibit && !isPaused) {
+                        showIllusion(currentExhibit.userData.id);
+                    }
+                    break;
+                case 'Escape':
+                    if (!isPaused) {
+                        isPaused = true;
+                        blocker.style.display = 'flex';
+                    }
+                    break;
+            }
+        }
+        
+        function onKeyUp(event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    movement.forward = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    movement.left = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    movement.backward = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    movement.right = false;
+                    break;
+            }
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>

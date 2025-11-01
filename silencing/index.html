@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebbinghaus Illusion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            border: 2px solid #333;
+            max-width: 420px;
+        }
+
+        #info h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        #info p {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        #revealBtn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        #revealBtn:hover {
+            background-color: #0056b3;
+        }
+
+        #revealBtn:active {
+            background-color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h1>Ebbinghaus Illusion</h1>
+        <p><strong>The two orange circles are EXACTLY the same size!</strong></p>
+        <p>The left circle appears <strong>smaller</strong> because it's surrounded by large circles.</p>
+        <p>The right circle appears <strong>larger</strong> because it's surrounded by small circles.</p>
+        <button id="revealBtn">Hide Surrounding Circles</button>
+    </div>
+    <canvas id="c"></canvas>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // ===== EBBINGHAUS ILLUSION - OPTIMIZED VERSION =====
+
+        const canvas = document.querySelector('#c');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf5f5f5);
+
+        // ===== OrthographicCamera setup =====
+        const aspect = window.innerWidth / window.innerHeight;
+        const frustumSize = 20;
+        const camera = new THREE.OrthographicCamera(
+            (frustumSize * aspect) / -2,
+            (frustumSize * aspect) / 2,
+            frustumSize / 2,
+            frustumSize / -2,
+            0.1,
+            1000
+        );
+
+        camera.position.set(0, 0, 10);
+        camera.lookAt(0, 0, 0);
+
+        // ===== Create Central Orange Circles (Identical Size) =====
+        const centralCircleRadius = 1.0;
+        const centralCircleGeometry = new THREE.CircleGeometry(centralCircleRadius, 32);
+        const centralCircleMaterial = new THREE.MeshBasicMaterial({ color: 0xff6600 });
+
+        // Left central circle
+        const leftCentralCircle = new THREE.Mesh(centralCircleGeometry, centralCircleMaterial);
+        leftCentralCircle.position.set(-6, 0, 0);
+        scene.add(leftCentralCircle);
+
+        // Right central circle
+        const rightCentralCircle = new THREE.Mesh(centralCircleGeometry, centralCircleMaterial);
+        rightCentralCircle.position.set(6, 0, 0);
+        scene.add(rightCentralCircle);
+
+        // ===== Create Surrounding Circles =====
+        const surroundingCircles = [];
+
+        // Left side - LARGE surrounding circles (make center appear SMALLER)
+        const largeCircleRadius = 1.8;
+        const largeCircleGeometry = new THREE.CircleGeometry(largeCircleRadius, 32);
+        const largeCircleMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 });
+
+        // Create 5 large circles around the left center (5 prevents overlap better than 6)
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2 - Math.PI / 2; // Start from top
+            const distance = 3.0; // Distance to prevent overlap but still close
+            const x = -6 + Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            
+            const circle = new THREE.Mesh(largeCircleGeometry, largeCircleMaterial);
+            circle.position.set(x, y, -0.1);
+            scene.add(circle);
+            surroundingCircles.push(circle);
+        }
+
+        // Right side - SMALL surrounding circles (make center appear LARGER)
+        const smallCircleRadius = 0.35;
+        const smallCircleGeometry = new THREE.CircleGeometry(smallCircleRadius, 32);
+        const smallCircleMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 });
+
+        // Create 8 small circles very close to the right center
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const distance = 1.5; // Very close to center
+            const x = 6 + Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            
+            const circle = new THREE.Mesh(smallCircleGeometry, smallCircleMaterial);
+            circle.position.set(x, y, -0.1);
+            scene.add(circle);
+            surroundingCircles.push(circle);
+        }
+
+        // ===== Reveal Button Functionality =====
+        let surroundingVisible = true;
+        const revealBtn = document.getElementById('revealBtn');
+
+        revealBtn.addEventListener('click', () => {
+            surroundingVisible = !surroundingVisible;
+            
+            surroundingCircles.forEach(circle => {
+                circle.visible = surroundingVisible;
+            });
+            
+            if (surroundingVisible) {
+                revealBtn.textContent = 'Hide Surrounding Circles';
+            } else {
+                revealBtn.textContent = 'Show Surrounding Circles';
+            }
+            
+            render();
+        });
+
+        // ===== Static Render =====
+        function render() {
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const aspect = window.innerWidth / window.innerHeight;
+            camera.left = (frustumSize * aspect) / -2;
+            camera.right = (frustumSize * aspect) / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = frustumSize / -2;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            render();
+        });
+
+        // Initial render
+        render();
+
+        console.log("Ebbinghaus illusion loaded! The orange circles are identical - click the button to verify!");
+    </script>
+</body>
+</html>

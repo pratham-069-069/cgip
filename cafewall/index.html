@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Café Wall Illusion - Three.js</title>
+		<style>
+			/* Basic page reset and theme */
+			body,
+			html {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+					Helvetica, Arial, sans-serif;
+				background-color: #1a1a1a;
+				color: #f0f0f0;
+			}
+
+			/* Canvas fills the background */
+			canvas {
+				display: block;
+				position: fixed;
+				top: 0;
+				left: 0;
+				z-index: 1;
+			}
+
+			/* Main UI Panel */
+			#ui-panel {
+				position: absolute;
+				top: 10px;
+				left: 10px;
+				z-index: 10;
+				background: rgba(30, 30, 30, 0.85);
+				backdrop-filter: blur(5px);
+				border: 1px solid #444;
+				border-radius: 8px;
+				padding: 15px;
+				min-width: 250px;
+			}
+
+			#ui-panel h2 {
+				margin: 0 0 15px 0;
+				font-size: 20px;
+				border-bottom: 1px solid #555;
+				padding-bottom: 10px;
+			}
+
+			.slider-group {
+				margin-bottom: 10px;
+			}
+
+			.slider-group label {
+				display: block;
+				font-size: 13px;
+				margin-bottom: 5px;
+			}
+
+			.slider-group span {
+				float: right;
+				font-family: "Courier New", Courier, monospace;
+				font-size: 13px;
+				background: #111;
+				padding: 2px 5px;
+				border-radius: 3px;
+			}
+
+			input[type="range"] {
+				width: 100%;
+				margin: 0;
+			}
+
+			.button-group {
+				display: grid;
+				grid-template-columns: 1fr 1fr 1fr;
+				gap: 5px;
+				margin-top: 15px;
+			}
+
+			button {
+				padding: 8px 5px;
+				font-size: 12px;
+				font-weight: bold;
+				border: 1px solid #666;
+				background-color: #333;
+				color: #eee;
+				border-radius: 5px;
+				cursor: pointer;
+				transition: background-color 0.2s;
+			}
+
+			button:hover {
+				background-color: #444;
+			}
+
+			button.active {
+				background-color: #2a6a96;
+				border-color: #5aa;
+			}
+
+			/* Info Panel */
+			#info-panel {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				z-index: 10;
+				background: rgba(30, 30, 30, 0.85);
+				backdrop-filter: blur(5px);
+				border: 1px solid #444;
+				border-radius: 8px;
+				padding: 15px;
+				width: 220px;
+				font-size: 13px;
+			}
+
+			#info-panel h3 {
+				margin: 0 0 10px 0;
+				color: #ffff80;
+			}
+
+			#info-panel p {
+				margin: 10px 0;
+			}
+
+			#info-panel ul {
+				padding-left: 20px;
+				margin: 10px 0;
+			}
+
+			/* Strength Meter */
+			#strength-meter {
+				position: absolute;
+				bottom: 10px;
+				left: 10px;
+				z-index: 10;
+				width: 250px;
+				font-size: 13px;
+			}
+
+			#strength-meter label {
+				margin-bottom: 5px;
+				display: block;
+			}
+
+			#strength-bar-container {
+				width: 100%;
+				height: 20px;
+				background: #333;
+				border: 1px solid #666;
+				border-radius: 5px;
+				overflow: hidden;
+			}
+
+			#strength-bar {
+				height: 100%;
+				width: 50%; /* Default */
+				background: linear-gradient(90deg, #ff8080, #ffff80, #80ff80);
+				transition: width 0.3s, background-color 0.3s;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- The Three.js canvas -->
+		<canvas id="c"></canvas>
+
+		<!-- UI Panel for Controls -->
+		<div id="ui-panel">
+			<h2>Café Wall Illusion</h2>
+			<!-- Offset Slider -->
+			<div class="slider-group">
+				<label
+					>Horizontal Offset
+					<span id="offset-value">0.50</span></label
+				>
+				<input
+					type="range"
+					id="offsetSlider"
+					min="0"
+					max="1"
+					step="0.01"
+					value="0.5" />
+			</div>
+			<!-- Line Thickness Slider -->
+			<div class="slider-group">
+				<label
+					>Line Thickness
+					<span id="thickness-value">2</span></label
+				>
+				<input
+					type="range"
+					id="thicknessSlider"
+					min="0"
+					max="10"
+					step="1"
+					value="2" />
+			</div>
+			<!-- Line Grayness Slider -->
+			<div class="slider-group">
+				<label
+					>Line Grayness <span id="gray-value">128</span></label
+				>
+				<input
+					type="range"
+					id="graySlider"
+					min="0"
+					max="255"
+					step="1"
+					value="128" />
+			</div>
+			<!-- Brick Width Slider -->
+			<div class="slider-group">
+				<label
+					>Brick Width <span id="width-value">40</span></label
+				>
+				<input
+					type="range"
+					id="widthSlider"
+					min="20"
+					max="80"
+					step="1"
+					value="40" />
+			</div>
+			<!-- Brick Height Slider -->
+			<div class="slider-group">
+				<label
+					>Brick Height <span id="height-value">30</span></label
+				>
+				<input
+					type="range"
+					id="heightSlider"
+					min="15"
+					max="50"
+					step="1"
+					value="30" />
+			</div>
+
+			<!-- Control Buttons -->
+			<div class="button-group">
+				<button id="revealButton">Show Lines</button>
+				<button id="gridButton">Show Grid</button>
+				<button id="animateButton">Animate</button>
+			</div>
+		</div>
+
+		<!-- Info Panel -->
+		<div id="info-panel">
+			<h3>🧱 Café Wall Illusion</h3>
+			<p>
+				The horizontal lines appear slanted but are perfectly straight and
+				parallel!
+			</p>
+			<strong>💡 The illusion works best with:</strong>
+			<ul>
+				<li>Medium offset (~0.5)</li>
+				<li>Thin gray lines (2-4px)</li>
+				<li>Medium gray color (100-150)</li>
+			</ul>
+		</div>
+
+		<!-- Illusion Strength Meter -->
+		<div id="strength-meter">
+			<label>Illusion Strength:</label>
+			<div id="strength-bar-container">
+				<div id="strength-bar"></div>
+			</div>
+		</div>
+
+		<!-- Import Three.js -->
+		<script
+			async
+			src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js"
+				}
+			}
+		</script>
+
+		<!-- Main Three.js Application Logic -->
+		<script type="module">
+			import * as THREE from "three";
+
+			// --- Global Variables ---
+			let scene, camera, renderer, clock;
+			let patternGroup, gridGroup, refLinesGroup;
+
+			// --- UI Element References ---
+			const sliders = {
+				offset: document.getElementById("offsetSlider"),
+				thickness: document.getElementById("thicknessSlider"),
+				gray: document.getElementById("graySlider"),
+				width: document.getElementById("widthSlider"),
+				height: document.getElementById("heightSlider"),
+			};
+			const values = {
+				offset: document.getElementById("offset-value"),
+				thickness: document.getElementById("thickness-value"),
+				gray: document.getElementById("gray-value"),
+				width: document.getElementById("width-value"),
+				height: document.getElementById("height-value"),
+			};
+			const buttons = {
+				reveal: document.getElementById("revealButton"),
+				grid: document.getElementById("gridButton"),
+				animate: document.getElementById("animateButton"),
+			};
+			const strengthBar = document.getElementById("strength-bar");
+
+			// --- State Variables ---
+			const config = {
+				offset: 0.5,
+				thickness: 2,
+				gray: 128,
+				width: 40,
+				height: 30,
+			};
+			let showReferenceLines = false;
+			let showGridLines = false;
+			let animationMode = false;
+			let needsRedraw = false; // <-- MOVED to global scope
+
+			// --- Materials (re-used to save memory) ---
+			const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+			const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+			const lineMat = new THREE.MeshBasicMaterial({ color: 0x808080 });
+			const gridMat = new THREE.LineBasicMaterial({
+				color: 0x00ff00,
+				transparent: true,
+				opacity: 0.5,
+			});
+			const refMat = new THREE.LineBasicMaterial({
+				color: 0xff0000,
+				linewidth: 2, // Note: linewidth > 1 has inconsistent support
+			});
+
+			/**
+			 * Helper function to clear all children from a Three.js Group
+			 * This is essential for redrawing and preventing memory leaks.
+			 */
+			function clearGroup(group) {
+				while (group.children.length > 0) {
+					const obj = group.children[0];
+					group.remove(obj);
+					if (obj.geometry) obj.geometry.dispose();
+					if (obj.material) {
+						// Don't dispose shared materials
+						if (Array.isArray(obj.material)) {
+							obj.material.forEach((m) => {
+								if (
+									m !== blackMat &&
+									m !== whiteMat &&
+									m !== lineMat
+								) {
+									m.dispose();
+								}
+							});
+						} else if (
+							obj.material !== blackMat &&
+							obj.material !== whiteMat &&
+							obj.material !== lineMat
+						) {
+							obj.material.dispose();
+						}
+					}
+				}
+			}
+
+			/**
+			 * Main function to draw the café wall pattern
+			 */
+			function drawCafeWallPattern() {
+				clearGroup(patternGroup);
+
+				// Get config values
+				let offsetRatio = parseFloat(config.offset);
+				const lineThickness = parseFloat(config.thickness);
+				const brickWidth = parseFloat(config.width);
+				const brickHeight = parseFloat(config.height);
+
+				// Handle animation
+				if (animationMode) {
+					const time = clock.getElapsedTime();
+					offsetRatio = 0.5 + 0.3 * Math.sin(time * 2);
+					// Update slider visually
+					sliders.offset.value = offsetRatio;
+					values.offset.textContent = offsetRatio.toFixed(2);
+				}
+
+				// Set line color
+				const grayVal = parseInt(config.gray) / 255;
+				lineMat.color.setRGB(grayVal, grayVal, grayVal);
+
+				// Define pattern boundaries
+				const patternWidth = window.innerWidth;
+				const patternHeight = window.innerHeight;
+				const startX = -patternWidth / 2;
+				const startY = patternHeight / 2;
+
+				const rowHeight = brickHeight + lineThickness;
+				const rows = Math.ceil(patternHeight / rowHeight);
+				const cols = Math.ceil(patternWidth / brickWidth) + 2; // +2 for offset
+
+				const brickGeo = new THREE.PlaneGeometry(brickWidth, brickHeight);
+
+				for (let row = 0; row < rows; row++) {
+					const y = startY - row * rowHeight - brickHeight / 2;
+
+					// Draw mortar line
+					if (lineThickness > 0 && row > 0) {
+						const lineY = y + brickHeight / 2 + lineThickness / 2;
+						const lineGeo = new THREE.PlaneGeometry(
+							patternWidth,
+							lineThickness
+						);
+						const lineMesh = new THREE.Mesh(lineGeo, lineMat);
+						lineMesh.position.set(0, lineY, 0);
+						patternGroup.add(lineMesh);
+					}
+
+					// Draw bricks
+					const xOffset =
+						row % 2 === 1 ? offsetRatio * brickWidth : 0;
+
+					for (let col = 0; col < cols; col++) {
+						const x =
+							startX +
+							col * brickWidth -
+							xOffset +
+							brickWidth / 2;
+
+						// Use shared materials
+						const mat = col % 2 === 0 ? blackMat : whiteMat;
+						const brick = new THREE.Mesh(brickGeo, mat);
+						brick.position.set(x, y, 0);
+
+						// We don't need to clip, just let them draw off-screen
+						patternGroup.add(brick);
+					}
+				}
+			}
+
+			/**
+			 * Draw the green grid lines
+			 */
+			function drawGridLines() {
+				clearGroup(gridGroup);
+				gridGroup.visible = showGridLines;
+				if (!showGridLines) return;
+
+				const brickWidth = parseFloat(config.width);
+				const brickHeight = parseFloat(config.height);
+				const lineThickness = parseFloat(config.thickness);
+				const rowHeight = brickHeight + lineThickness;
+
+				const width = window.innerWidth;
+				const height = window.innerHeight;
+
+				// Vertical lines
+				const cols = Math.ceil(width / brickWidth) + 2;
+				for (let i = -cols / 2; i <= cols / 2; i++) {
+					const points = [
+						new THREE.Vector3(i * brickWidth, height / 2, 1),
+						new THREE.Vector3(i * brickWidth, -height / 2, 1),
+					];
+					const geo = new THREE.BufferGeometry().setFromPoints(points);
+					gridGroup.add(new THREE.Line(geo, gridMat));
+				}
+
+				// Horizontal lines
+				const rows = Math.ceil(height / rowHeight);
+				for (let i = -rows / 2; i <= rows / 2; i++) {
+					const y = i * rowHeight;
+					const points = [
+						new THREE.Vector3(-width / 2, y, 1),
+						new THREE.Vector3(width / 2, y, 1),
+					];
+					const geo = new THREE.BufferGeometry().setFromPoints(points);
+					gridGroup.add(new THREE.Line(geo, gridMat));
+				}
+			}
+
+			/**
+			 * Draw the red reference lines
+			 */
+			function drawReferenceLines() {
+				clearGroup(refLinesGroup);
+				refLinesGroup.visible = showReferenceLines;
+				if (!showReferenceLines) return;
+
+				const brickHeight = parseFloat(config.height);
+				const lineThickness = parseFloat(config.thickness);
+				const rowHeight = brickHeight + lineThickness;
+
+				const width = window.innerWidth;
+				const height = window.innerHeight;
+				const rows = Math.ceil(height / rowHeight);
+
+				for (let i = 0; i < rows; i++) {
+					const y =
+						height / 2 -
+						i * rowHeight -
+						brickHeight -
+						lineThickness / 2;
+					const points = [
+						new THREE.Vector3(-width / 2 - 20, y, 2),
+						new THREE.Vector3(width / 2 + 20, y, 2),
+					];
+					const geo = new THREE.BufferGeometry().setFromPoints(points);
+					refLinesGroup.add(new THREE.Line(geo, refMat));
+				}
+			}
+
+			/**
+			 * Update the illusion strength meter
+			 */
+			function updateStrengthMeter() {
+				const offset = parseFloat(config.offset);
+				const thickness = parseFloat(config.thickness);
+				const gray = parseFloat(config.gray);
+
+				const offsetFactor = 1.0 - Math.abs(offset - 0.5) * 2;
+				const thicknessFactor = Math.max(
+					0,
+					1.0 - Math.abs(thickness - 3) / 5
+				);
+				const grayFactor = 1.0 - Math.abs(gray - 128) / 128;
+
+				const strength = Math.max(
+					0,
+					(offsetFactor + thicknessFactor + grayFactor) / 3
+				);
+
+				strengthBar.style.width = `${strength * 100}%`;
+
+				if (strength > 0.7)
+					strengthBar.style.backgroundColor = "#80ff80";
+				else if (strength > 0.4)
+					strengthBar.style.backgroundColor = "#ffff80";
+				else strengthBar.style.backgroundColor = "#ff8080";
+			}
+
+			/**
+			 * Main Init Function
+			 */
+			function init() {
+				// --- Scene Setup ---
+				scene = new THREE.Scene();
+				clock = new THREE.Clock();
+
+				// --- Renderer Setup ---
+				const canvas = document.querySelector("#c");
+				renderer = new THREE.WebGLRenderer({
+					canvas,
+					antialias: true,
+				});
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderer.setPixelRatio(window.devicePixelRatio);
+
+				// --- Camera Setup (Orthographic) ---
+				// We set it up so (0,0) is the center, Y is up
+				const width = window.innerWidth;
+				const height = window.innerHeight;
+				camera = new THREE.OrthographicCamera(
+					width / -2,
+					width / 2,
+					height / 2,
+					height / -2,
+					1,
+					10
+				);
+				camera.position.z = 5;
+				scene.add(camera);
+
+				// --- Groups for managing objects ---
+				patternGroup = new THREE.Group();
+				gridGroup = new THREE.Group();
+				refLinesGroup = new THREE.Group();
+				scene.add(patternGroup, gridGroup, refLinesGroup);
+
+				// --- Event Listeners for UI ---
+				// let needsRedraw = false; // <-- REMOVED from here
+
+				for (const key in sliders) {
+					sliders[key].addEventListener("input", (e) => {
+						config[key] = e.target.value;
+						if (key === "offset") {
+							values[key].textContent = parseFloat(
+								config[key]
+							).toFixed(2);
+						} else {
+							values[key].textContent = config[key];
+						}
+						// Mark scene as needing a full redraw
+						needsRedraw = true; // <-- Sets global flag
+					});
+				}
+
+				buttons.reveal.addEventListener("click", () => {
+					showReferenceLines = !showReferenceLines;
+					buttons.reveal.textContent = showReferenceLines
+						? "Hide Lines"
+						: "Show Lines";
+					buttons.reveal.classList.toggle("active", showReferenceLines);
+					needsRedraw = true; // <-- Sets global flag
+				});
+
+				buttons.grid.addEventListener("click", () => {
+					showGridLines = !showGridLines;
+					buttons.grid.textContent = showGridLines
+						? "Hide Grid"
+						: "Show Grid";
+					buttons.grid.classList.toggle("active", showGridLines);
+					needsRedraw = true; // <-- Sets global flag
+				});
+
+				buttons.animate.addEventListener("click", () => {
+					animationMode = !animationMode;
+					buttons.animate.textContent = animationMode
+						? "Stop"
+						: "Animate";
+					buttons.animate.classList.toggle("active", animationMode);
+					needsRedraw = true; // <-- Sets global flag
+				});
+
+				// --- Window Resize ---
+				window.addEventListener("resize", onWindowResize);
+
+				// --- Initial Draw ---
+				needsRedraw = true; // <-- Sets global flag for first paint
+				animate();
+			}
+
+			/**
+			 * Handle Window Resize
+			 */
+			function onWindowResize() {
+				const width = window.innerWidth;
+				const height = window.innerHeight;
+
+				camera.left = -width / 2;
+				camera.right = width / 2;
+				camera.top = height / 2;
+				camera.bottom = -height / 2;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize(width, height);
+				renderer.setPixelRatio(window.devicePixelRatio);
+
+				// Redraw everything on resize
+				needsRedraw = true; // <-- CHANGED: Just set the flag
+			}
+
+			/**
+			 * Main Animation Loop
+			 */
+			function animate() {
+				requestAnimationFrame(animate);
+
+				// let needsRedraw = false; // <-- REMOVED from here
+
+				if (animationMode) {
+					needsRedraw = true;
+				}
+
+				// REMOVED redundant slider check loop
+				// Event listeners now handle this correctly
+
+				// Only redraw if needed (saves power)
+				if (needsRedraw) {
+					drawCafeWallPattern();
+					drawGridLines();
+					drawReferenceLines();
+					updateStrengthMeter();
+
+					// Reset the flag ONLY if we are not animating
+					if (!animationMode) {
+						needsRedraw = false;
+					}
+				}
+
+				renderer.render(scene, camera);
+			}
+
+			// Start the application
+			init();
+		</script>
+	</body>
+</html>
+

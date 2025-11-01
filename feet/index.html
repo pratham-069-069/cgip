@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stepping Feet Illusion - Three.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+        
+        .info-panel h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #ffff00;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+        }
+        
+        .info-panel p {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 100;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.active {
+            background: rgba(255, 255, 0, 0.6);
+            color: black;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 255, 0, 0.8);
+            color: black;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 100;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        .illusion-explanation {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(100, 50, 200, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+            font-size: 12px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <h1>🦶 Stepping Feet Illusion</h1>
+        <p><strong>What you see:</strong> The yellow and blue rectangles appear to move at different speeds and distances, creating a "stepping" motion.</p>
+        <p><strong>Reality:</strong> Both rectangles move identically - the same speed and distance!</p>
+        <p><strong>Why it works:</strong> The black and white stripes mask the motion differently for each rectangle, creating the illusion of different movement patterns.</p>
+    </div>
+    
+    <!-- Status Indicator -->
+    <div class="status-indicator">
+        ILLUSION ACTIVE
+    </div>
+    
+    <!-- Controls -->
+    <div class="controls">
+        <div style="margin-bottom: 10px; font-weight: bold;">🎛️ Controls:</div>
+        <button class="control-btn active" onclick="toggleAnimation()">⏸️ Pause/Resume</button>
+        <button class="control-btn" onclick="toggleStripes()">🎨 Toggle Stripes</button>
+        <button class="control-btn" onclick="resetAnimation()">🔄 Reset</button>
+        <br>
+        <button class="control-btn" onclick="changeSpeed(0.5)">🐌 Slow</button>
+        <button class="control-btn" onclick="changeSpeed(1.0)">🚶 Normal</button>
+        <button class="control-btn" onclick="changeSpeed(2.0)">🏃 Fast</button>
+    </div>
+    
+    <!-- Explanation -->
+    <div class="illusion-explanation">
+        <strong>🧠 The Science:</strong><br/>
+        This illusion demonstrates how our visual system processes motion. The stripes create "aperture masking" - we can only see portions of the moving objects through the gaps, making our brain interpret different motion patterns even when the actual movement is identical.
+    </div>
+
+    <script>
+        // Scene setup
+        let scene, camera, renderer;
+        let yellowBlock, blueBlock;
+        let stripesMesh;
+        let animationId;
+        let isAnimating = true;
+        let showStripes = true;
+        let animationSpeed = 1.0;
+        let time = 0;
+        
+        // Animation parameters
+        const MOVEMENT_AMPLITUDE = 3.0; // How far the blocks move horizontally
+        const ANIMATION_FREQUENCY = 0.8; // Speed of the oscillation
+        
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+            
+            // Orthographic Camera (as requested)
+            const aspect = window.innerWidth / window.innerHeight;
+            const frustumSize = 10;
+            camera = new THREE.OrthographicCamera(
+                frustumSize * aspect / -2,
+                frustumSize * aspect / 2,
+                frustumSize / 2,
+                frustumSize / -2,
+                0.1,
+                100
+            );
+            camera.position.set(0, 0, 10);
+            camera.lookAt(0, 0, 0);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            
+            // Create the scene elements
+            createBackground();
+            createBlocks();
+            
+            // Start animation
+            animate();
+        }
+        
+        function createBackground() {
+            // Create alternating black and white vertical stripes
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 512;
+            
+            // Number of stripes
+            const stripeCount = 32;
+            const stripeWidth = canvas.width / stripeCount;
+            
+            // Draw alternating stripes
+            for (let i = 0; i < stripeCount; i++) {
+                ctx.fillStyle = i % 2 === 0 ? '#000000' : '#ffffff';
+                ctx.fillRect(i * stripeWidth, 0, stripeWidth, canvas.height);
+            }
+            
+            // Create texture and material
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 4); // Repeat the pattern
+            
+            const stripeMaterial = new THREE.MeshBasicMaterial({ 
+                map: texture,
+                transparent: false
+            });
+            
+            // Create a large plane for the background
+            const stripeGeometry = new THREE.PlaneGeometry(25, 15);
+            stripesMesh = new THREE.Mesh(stripeGeometry, stripeMaterial);
+            stripesMesh.position.z = -1; // Behind the blocks
+            scene.add(stripesMesh);
+        }
+        
+        function createBlocks() {
+            // Yellow block (top)
+            const yellowGeometry = new THREE.BoxGeometry(1.5, 0.8, 0.2);
+            const yellowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            yellowBlock = new THREE.Mesh(yellowGeometry, yellowMaterial);
+            yellowBlock.position.set(2, 1.5, 0); // Center-right, upper position
+            scene.add(yellowBlock);
+            
+            // Blue block (bottom)
+            const blueGeometry = new THREE.BoxGeometry(1.5, 0.8, 0.2);
+            const blueMaterial = new THREE.MeshBasicMaterial({ color: 0x000080 });
+            blueBlock = new THREE.Mesh(blueGeometry, blueMaterial);
+            blueBlock.position.set(2, -1.5, 0); // Center-right, lower position
+            scene.add(blueBlock);
+        }
+        
+        function animate() {
+            if (isAnimating) {
+                time += 0.016 * animationSpeed; // Approximately 60fps
+                
+                // Calculate the horizontal movement using sine wave
+                const movement = Math.sin(time * ANIMATION_FREQUENCY) * MOVEMENT_AMPLITUDE;
+                
+                // CRITICAL: Both blocks move identically!
+                // The illusion comes from how the stripes mask their motion
+                yellowBlock.position.x = 2 + movement;
+                blueBlock.position.x = 2 + movement;
+                
+                // Optional: Add slight phase difference for more pronounced illusion
+                // Uncomment the line below to see an even stronger effect:
+                // blueBlock.position.x = 2 + movement * 0.8 + Math.sin(time * ANIMATION_FREQUENCY + 0.5) * 0.3;
+            }
+            
+            renderer.render(scene, camera);
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Control functions
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            const btn = event.target;
+            btn.textContent = isAnimating ? '⏸️ Pause' : '▶️ Resume';
+            btn.classList.toggle('active');
+        }
+        
+        function toggleStripes() {
+            showStripes = !showStripes;
+            stripesMesh.visible = showStripes;
+            const btn = event.target;
+            btn.textContent = showStripes ? '🎨 Hide Stripes' : '🎨 Show Stripes';
+            btn.classList.toggle('active');
+            
+            // Update explanation when stripes are hidden
+            const explanation = document.querySelector('.illusion-explanation');
+            if (!showStripes) {
+                explanation.innerHTML = '<strong>🔍 Stripes Hidden:</strong><br/>Now you can see that both rectangles move identically! The illusion disappears when the masking stripes are removed.';
+                explanation.style.background = 'rgba(200, 50, 50, 0.9)';
+            } else {
+                explanation.innerHTML = '<strong>🧠 The Science:</strong><br/>This illusion demonstrates how our visual system processes motion. The stripes create "aperture masking" - we can only see portions of the moving objects through the gaps, making our brain interpret different motion patterns even when the actual movement is identical.';
+                explanation.style.background = 'rgba(100, 50, 200, 0.9)';
+            }
+        }
+        
+        function resetAnimation() {
+            time = 0;
+            yellowBlock.position.x = 2;
+            blueBlock.position.x = 2;
+            const btn = event.target;
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 200);
+        }
+        
+        function changeSpeed(speed) {
+            animationSpeed = speed;
+            // Update button states
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                if (btn.textContent.includes('Slow') || btn.textContent.includes('Normal') || btn.textContent.includes('Fast')) {
+                    btn.classList.remove('active');
+                }
+            });
+            event.target.classList.add('active');
+        }
+        
+        // Window resize handler
+        function onWindowResize() {
+            const aspect = window.innerWidth / window.innerHeight;
+            const frustumSize = 10;
+            
+            camera.left = frustumSize * aspect / -2;
+            camera.right = frustumSize * aspect / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = frustumSize / -2;
+            camera.updateProjectionMatrix();
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        window.addEventListener('resize', onWindowResize);
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (event) => {
+            switch(event.code) {
+                case 'Space':
+                    event.preventDefault();
+                    toggleAnimation();
+                    break;
+                case 'KeyS':
+                    toggleStripes();
+                    break;
+                case 'KeyR':
+                    resetAnimation();
+                    break;
+                case 'Digit1':
+                    changeSpeed(0.5);
+                    break;
+                case 'Digit2':
+                    changeSpeed(1.0);
+                    break;
+                case 'Digit3':
+                    changeSpeed(2.0);
+                    break;
+            }
+        });
+        
+        // Initialize the scene
+        init();
+        
+        // Add some visual feedback for the illusion
+        setTimeout(() => {
+            const status = document.querySelector('.status-indicator');
+            status.style.background = 'rgba(255, 165, 0, 0.8)';
+            status.textContent = 'OBSERVE THE DIFFERENCE';
+        }, 5000);
+        
+        setTimeout(() => {
+            const status = document.querySelector('.status-indicator');
+            status.style.background = 'rgba(255, 0, 0, 0.8)';
+            status.textContent = 'BOTH MOVE THE SAME!';
+        }, 10000);
+    </script>
+</body>
+</html>
