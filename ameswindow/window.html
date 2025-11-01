@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ames Window Illusion</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+    }
+    #container {
+      width: 100vw;
+      height: 100vh;
+    }
+    .title {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 20px 40px;
+      border-radius: 15px;
+      font-size: 24px;
+      text-align: center;
+      pointer-events: none;
+      border: 2px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    .instructions {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #cccccc;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      text-align: center;
+      pointer-events: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      z-index: 100;
+    }
+    .explanation {
+      position: absolute;
+      top: 120px;
+      right: 30px;
+      background: rgba(100,150,255,0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      max-width: 280px;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <div class="title">
+    Ames Window Illusion<br/>
+    <small style="font-size: 14px; opacity: 0.8;">The Oscillating Trapezoid</small>
+  </div>
+  <div class="explanation">
+    🎭 <strong>The Illusion:</strong><br/>
+    • The window rotates continuously<br/>
+    • But appears to oscillate back & forth<br/>
+    • Your brain interprets false perspective cues<br/>
+    • The trapezoid looks like a tilted rectangle
+  </div>
+  <div class="instructions">
+    Watch the "rectangular window" oscillate • It's actually rotating continuously!
+  </div>
+
+  <script>
+    const container = document.getElementById('container');
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    // CRITICAL: Uniform background color to minimize depth cues
+    scene.background = new THREE.Color(0xd0d0d0);
+    
+    // CRITICAL: PerspectiveCamera with LOW FOV (long focal length) for the illusion
+    const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    // CRITICAL: Position camera far back and centered for the illusion
+    camera.position.set(0, 0, 50);
+    camera.lookAt(0, 0, 0);
+
+    // CRITICAL: Flat, non-directional lighting to avoid revealing 3D shape
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+    
+    // Add subtle hemisphere light for slight variation
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xcccccc, 0.4);
+    scene.add(hemisphereLight);
+
+    // CRITICAL: Create trapezoidal geometry that mimics perspective rectangle
+    const createTrapezoidalWindow = () => {
+      // Define trapezoid dimensions
+      const leftHeight = 6;   // Taller "near" side
+      const rightHeight = 4.8; // Shorter "far" side  
+      const width = 8;
+      
+      // We use a PlaneGeometry because it gives us correct (0,0) to (1,1) UV mapping
+      // which will stretch the rectangular texture perfectly onto our trapezoid shape.
+      const geometry = new THREE.PlaneGeometry(width, leftHeight, 1, 1);
+
+      // Manually set the vertex positions to create the trapezoid
+      const positions = geometry.attributes.position;
+      
+      // positions is a Float32Array: [x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3]
+      // Vertex order in PlaneGeometry:
+      // 0: bottom-left
+      // 1: bottom-right
+      // 2: top-left
+      // 3: top-right
+      
+      // Our trapezoid vertices:
+      const bl = { x: -width/2, y: -leftHeight/2 };    // (-4, -3)
+      const br = { x: width/2,  y: -rightHeight/2 };   // (4, -2.4)
+      const tl = { x: -width/2, y: leftHeight/2 };     // (-4, 3)
+      const tr = { x: width/2,  y: rightHeight/2 };     // (4, 2.4)
+
+      // Set vertex 0 (bottom-left)
+      positions.setXY(0, bl.x, bl.y);
+      
+      // Set vertex 1 (bottom-right)
+      positions.setXY(1, br.x, br.y);
+      
+      // Set vertex 2 (top-left)
+      positions.setXY(2, tl.x, tl.y);
+      
+      // Set vertex 3 (top-right)
+      positions.setXY(3, tr.x, tr.y);
+      
+      // Mark the attribute as needing an update
+      positions.needsUpdate = true;
+      
+      return geometry;
+    };
+
+    // CRITICAL: Create texture with false perspective cues
+    const createWindowTexture = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      const frameThickness = 20;
+      const innerWidth = canvas.width - 2 * frameThickness;
+      const innerHeight = canvas.height - 2 * frameThickness;
+      
+      // 1. Fill background color
+      ctx.fillStyle = '#f8f8f8';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 2. Add window glass with subtle reflections
+      ctx.fillStyle = 'rgba(173, 216, 230, 0.3)'; // Light blue glass
+      ctx.fillRect(frameThickness, frameThickness, innerWidth, innerHeight);
+      
+      // 3. Add highlights to simulate depth (window sill effect)
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+      gradient.addColorStop(0.1, 'rgba(255, 255, 255, 0.1)');
+      gradient.addColorStop(0.9, 'rgba(0, 0, 0, 0.1)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(frameThickness, frameThickness, innerWidth, innerHeight);
+
+      // 4. Draw window frame (rectangular in 2D) - ON TOP of glass
+      ctx.strokeStyle = '#8B4513'; // Brown frame
+      ctx.lineWidth = 8;
+      ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+      
+      // 5. Draw window panes (mullions) - ON TOP of glass
+      ctx.strokeStyle = '#654321';
+      ctx.lineWidth = 12;
+      
+      // Vertical mullion (center)
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, frameThickness);
+      ctx.lineTo(canvas.width / 2, canvas.height - frameThickness);
+      ctx.stroke();
+      
+      // Horizontal mullion (center)
+      ctx.beginPath();
+      ctx.moveTo(frameThickness, canvas.height / 2);
+      ctx.lineTo(canvas.width - frameThickness, canvas.height / 2);
+      ctx.stroke();
+      
+      // 6. Add corner details for more realistic window appearance
+      ctx.fillStyle = '#A0522D';
+      const cornerSize = 8;
+      // Top-left corner
+      ctx.fillRect(frameThickness - cornerSize/2, frameThickness - cornerSize/2, cornerSize, cornerSize);
+      // Top-right corner  
+      ctx.fillRect(canvas.width - frameThickness - cornerSize/2, frameThickness - cornerSize/2, cornerSize, cornerSize);
+      // Bottom-left corner
+      ctx.fillRect(frameThickness - cornerSize/2, canvas.height - frameThickness - cornerSize/2, cornerSize, cornerSize);
+      // Bottom-right corner
+      ctx.fillRect(canvas.width - frameThickness - cornerSize/2, canvas.height - frameThickness - cornerSize/2, cornerSize, cornerSize);
+      
+      // Create texture from canvas
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      return texture;
+    };
+
+    // Create the Ames Window
+    const windowGeometry = createTrapezoidalWindow();
+    const windowTexture = createWindowTexture();
+    
+    // CRITICAL: DoubleSide material so window is visible when rotating
+    const windowMaterial = new THREE.MeshLambertMaterial({
+      map: windowTexture,
+      side: THREE.DoubleSide,
+      transparent: false
+    });
+    
+    const amesWindow = new THREE.Mesh(windowGeometry, windowMaterial);
+    scene.add(amesWindow);
+    
+    // Add a subtle background reference plane to enhance the illusion
+    const backgroundGeo = new THREE.PlaneGeometry(30, 20);
+    const backgroundMat = new THREE.MeshLambertMaterial({ 
+      color: 0xe8e8e8, 
+      transparent: true, 
+      opacity: 0.3 
+    });
+    const background = new THREE.Mesh(backgroundGeo, backgroundMat);
+    background.position.z = -5;
+    scene.add(background);
+
+    // Animation variables
+    let rotationSpeed = 0.01;
+    let rotationDirection = 1;
+    
+    // CRITICAL: Animation loop - continuous rotation creates illusion of oscillation
+    const clock = new THREE.Clock();
+    const animate = () => {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+
+      // CRITICAL: Continuous rotation around Y-axis
+      // The illusion makes this appear as oscillation, but it's actually constant rotation
+      amesWindow.rotation.y += rotationSpeed * rotationDirection;
+      
+      // Optional: Vary rotation speed slightly for more natural appearance
+      rotationSpeed = 0.008 + Math.sin(clock.getElapsedTime() * 0.3) * 0.002;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Optional: Add keyboard controls to demonstrate the illusion
+    document.addEventListener('keydown', (event) => {
+      switch(event.code) {
+        case 'Space':
+          // Pause/resume rotation to show it's really rotating
+          rotationDirection = rotationDirection === 0 ? 1 : 0;
+          break;
+        case 'KeyR':
+          // Reverse rotation direction
+          rotationDirection *= -1;
+          break;
+        case 'KeyF':
+          // Speed up rotation to break illusion
+          rotationSpeed *= 2;
+          setTimeout(() => rotationSpeed /= 2, 2000);
+          break;
+      }
+    });
+
+    // Add instructions for keyboard controls
+    document.addEventListener('DOMContentLoaded', () => {
+      const instructions = document.querySelector('.instructions');
+      instructions.innerHTML += '<br/><small>SPACE: Pause • R: Reverse • F: Fast (breaks illusion)</small>';
+    });
+  </script>
+</body>
+</html>
