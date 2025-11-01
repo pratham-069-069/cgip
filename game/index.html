@@ -828,7 +828,11 @@
         
         function showQuiz(quizId) {
             const overlay = document.getElementById(quizId + '-overlay');
-            if (!overlay) return;
+            if (!overlay) {
+                isPaused = false
+                return;
+            }
+            
 
             overlay.classList.add('active');
 
