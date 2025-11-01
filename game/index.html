@@ -271,58 +271,19 @@
             </div>
         </div>
 
-        <!-- Poggendorff Quiz (Café Wall) -->
+        <!-- Fake Café Wall Quiz (for Café Wall exhibit) -->
+        <div id="fakeCafeWallQuiz-overlay" class="overlay">
+            <iframe id="fakeCafeWall-quiz-iframe" style="width: 90vw; height: 90vh; border: none; background: white;"></iframe>
+        </div>
+
+        <!-- Poggendorff Quiz (for Walking Feet exhibit) -->
         <div id="poggendorffQuiz-overlay" class="overlay">
-            <div class="question-container">
-                <h2 class="text-4xl font-bold text-white mb-8">☕ CAFÉ WALL QUIZ</h2>
-                <p class="text-xl text-white mb-8">Which line is continuous with the black line?</p>
-                
-                <div class="mb-8">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Crect width='400' height='200' fill='%23f0f0f0'/%3E%3Crect x='150' y='0' width='100' height='200' fill='%23888888'/%3E%3Cline x1='0' y1='75' x2='150' y2='100' stroke='black' stroke-width='4'/%3E%3Cline x1='250' y1='125' x2='400' y2='150' stroke='red' stroke-width='4'/%3E%3Cline x1='250' y1='75' x2='400' y2='100' stroke='blue' stroke-width='4'/%3E%3C/svg%3E" 
-                         alt="Poggendorff Illusion" style="width: 400px; height: 200px; border: 3px solid white;"/>
-                </div>
-                
-                <div class="flex justify-center gap-4">
-                    <button class="answer-btn bg-red-500 text-white" onclick="quizAnswer('poggendorff', 'red')">The Red Line</button>
-                    <button class="answer-btn bg-blue-500 text-white" onclick="quizAnswer('poggendorff', 'blue')">The Blue Line</button>
-                </div>
-            </div>
+            <iframe id="pogendorff-quiz-iframe" style="width: 90vw; height: 90vh; border: none; background: white;"></iframe>
         </div>
 
-        <!-- Ebbinghaus Quiz (Walking Feet) -->
-        <div id="ebbinghausQuiz-overlay" class="overlay">
-            <div class="question-container">
-                <h2 class="text-4xl font-bold text-white mb-8">👣 WALKING FEET QUIZ</h2>
-                <p class="text-xl text-white mb-8">Are the two central orange circles the same size?</p>
-                
-                <div class="mb-8">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='300'%3E%3Crect width='600' height='300' fill='%23f0f0f0'/%3E%3C!-- Left side: large surrounding circles --%3E%3Ccircle cx='120' cy='150' r='30' fill='orange'/%3E%3Ccircle cx='60' cy='100' r='25' fill='%23666'/%3E%3Ccircle cx='180' cy='100' r='25' fill='%23666'/%3E%3Ccircle cx='60' cy='200' r='25' fill='%23666'/%3E%3Ccircle cx='180' cy='200' r='25' fill='%23666'/%3E%3Ccircle cx='90' cy='75' r='25' fill='%23666'/%3E%3Ccircle cx='150' cy='75' r='25' fill='%23666'/%3E%3C!-- Right side: small surrounding circles --%3E%3Ccircle cx='480' cy='150' r='30' fill='orange'/%3E%3Ccircle cx='440' cy='120' r='10' fill='%23666'/%3E%3Ccircle cx='520' cy='120' r='10' fill='%23666'/%3E%3Ccircle cx='440' cy='180' r='10' fill='%23666'/%3E%3Ccircle cx='520' cy='180' r='10' fill='%23666'/%3E%3Ccircle cx='450' cy='100' r='10' fill='%23666'/%3E%3Ccircle cx='510' cy='100' r='10' fill='%23666'/%3E%3Ccircle cx='450' cy='200' r='10' fill='%23666'/%3E%3Ccircle cx='510' cy='200' r='10' fill='%23666'/%3E%3C/svg%3E" 
-                         alt="Ebbinghaus Illusion" style="width: 600px; height: 300px; border: 3px solid white;"/>
-                </div>
-                
-                <div class="flex justify-center gap-4">
-                    <button class="answer-btn bg-green-500 text-white" onclick="quizAnswer('ebbinghaus', 'yes')">Yes, they are identical</button>
-                    <button class="answer-btn bg-red-500 text-white" onclick="quizAnswer('ebbinghaus', 'no')">No, the right one is bigger</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Squint Quiz (Ames Window) -->
-        <div id="squintQuiz-overlay" class="overlay">
-            <div class="question-container">
-                <h2 class="text-4xl font-bold text-white mb-8">🪟 AMES WINDOW QUIZ</h2>
-                <p class="text-xl text-white mb-8">What part of this image is really moving?</p>
-                
-                <div class="mb-8">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23000'/%3E%3Cg transform='translate(200,200)'%3E%3C!-- Rotating color wheel 1 --%3E%3Ccircle cx='-100' cy='-100' r='60' fill='%23ff0000' opacity='0.8'/%3E%3Ccircle cx='-100' cy='-100' r='40' fill='%23ffff00' opacity='0.8'/%3E%3Ccircle cx='-100' cy='-100' r='20' fill='%23ff0000' opacity='0.8'/%3E%3C!-- Static arrow --%3E%3Cpolygon points='-130,-100 -70,-100 -85,-85 -85,-95 -115,-95 -115,-105 -85,-105 -85,-115' fill='white'/%3E%3C!-- Rotating color wheel 2 --%3E%3Ccircle cx='100' cy='100' r='60' fill='%2300ff00' opacity='0.8'/%3E%3Ccircle cx='100' cy='100' r='40' fill='%230000ff' opacity='0.8'/%3E%3Ccircle cx='100' cy='100' r='20' fill='%2300ff00' opacity='0.8'/%3E%3C!-- Static arrow --%3E%3Cpolygon points='70,100 130,100 115,115 115,105 85,105 85,95 115,95 115,85' fill='white'/%3E%3C/g%3E%3C/svg%3E" 
-                         alt="Squint Motion Illusion" style="width: 400px; height: 400px; border: 3px solid white;"/>
-                </div>
-                
-                <div class="flex justify-center gap-4">
-                    <button class="answer-btn bg-purple-500 text-white" onclick="quizAnswer('squint', 'structure')">The whole structure is rotating</button>
-                    <button class="answer-btn bg-orange-500 text-white" onclick="quizAnswer('squint', 'colors')">Only the colors are rotating</button>
-                </div>
-            </div>
+        <!-- Silencing Quiz (for Ames Window exhibit) -->
+        <div id="silencingQuiz-overlay" class="overlay">
+            <iframe id="silencing-quiz-iframe" style="width: 90vw; height: 90vh; border: none; background: white;"></iframe>
         </div>
         
         <!-- Main Illusion Overlays -->
@@ -360,9 +321,9 @@
         // Exhibit state management
         const exhibitState = {
             amesRoom: { quizPassed: false, quizId: 'afterimageQuiz' },
-            cafeWall: { quizPassed: false, quizId: 'poggendorffQuiz' },
-            walkingFeet: { quizPassed: false, quizId: 'ebbinghausQuiz' },
-            amesWindow: { quizPassed: false, quizId: 'squintQuiz' }
+            cafeWall: { quizPassed: false, quizId: 'fakeCafeWallQuiz' },
+            walkingFeet: { quizPassed: false, quizId: 'pogendorffQuiz' },
+            amesWindow: { quizPassed: false, quizId: 'silencingQuiz' }
         };
         
         // Movement
@@ -423,6 +384,39 @@
             document.addEventListener('keyup', onKeyUp);
             
             window.addEventListener('resize', onWindowResize);
+            
+            // Listen for messages from quiz iframes
+            window.addEventListener('message', receiveQuizPass);
+        }
+        
+        // Listen for messages from quiz iframes
+        function receiveQuizPass(event) {
+            // We only care about 'quizPassed' messages
+            if (event.data.quizPassed) {
+                const exhibitId = event.data.quizPassed; // e.g., 'cafeWall', 'walkingFeet', etc.
+
+                if (exhibitState[exhibitId] && !exhibitState[exhibitId].quizPassed) {
+                    console.log(`Quiz passed for: ${exhibitId}`);
+                    exhibitState[exhibitId].quizPassed = true;
+
+                    // Find the quizId (overlay ID) from the exhibitId
+                    const quizId = exhibitState[exhibitId].quizId;
+                    const quizOverlay = document.getElementById(quizId + '-overlay');
+
+                    if (quizOverlay) {
+                        quizOverlay.classList.remove('active');
+                        // Stop the quiz iframe from running
+                        const quizIframe = quizOverlay.querySelector('iframe');
+                        if (quizIframe) {
+                            quizIframe.src = ''; 
+                        }
+                    }
+
+                    alert('Correct! The exhibit is now unlocked!');
+                    // Automatically show the main illusion
+                    showMainIllusion(exhibitId);
+                }
+            }
         }
         
         function createMuseum() {
@@ -823,122 +817,77 @@
             document.querySelectorAll('.overlay').forEach(overlay => {
                 overlay.classList.remove('active');
             });
-            
-            // Clear and reset all iframes to stop background processing
-            const iframes = ['cafeWall-iframe', 'walkingFeet-iframe', 'amesWindow-iframe'];
-            iframes.forEach(iframeId => {
-                const iframe = document.getElementById(iframeId);
-                if (iframe) {
-                    const originalSrc = iframe.src;
-                    iframe.src = '';
-                    // Reset after a brief moment
-                    setTimeout(() => {
-                        iframe.src = originalSrc;
-                    }, 100);
-                }
+
+            // Stop all iframes from running in the background
+            document.querySelectorAll('iframe').forEach(iframe => {
+                iframe.src = ''; // Clear the src to stop execution
             });
-            
+
             controls.lock();
         }
         
         function showQuiz(quizId) {
-            const overlayId = quizId + '-overlay';
-            const overlay = document.getElementById(overlayId);
-            
-            if (!overlay) {
-                console.error('Quiz overlay not found:', overlayId);
-                return;
-            }
-            
+            const overlay = document.getElementById(quizId + '-overlay');
+            if (!overlay) return;
+
             overlay.classList.add('active');
-            
-            // Special handling for afterimage quiz
-            if (quizId === 'afterimageQuiz') {
-                let countdown = 20;
-                const timer = document.getElementById('afterimage-timer');
-                
-                const interval = setInterval(() => {
-                    countdown--;
-                    timer.textContent = countdown;
-                    
-                    if (countdown <= 0) {
-                        clearInterval(interval);
-                        document.getElementById('afterimage-content').style.display = 'none';
-                        document.getElementById('afterimage-white-screen').style.display = 'block';
-                        
-                        setTimeout(() => {
-                            document.getElementById('afterimage-white-screen').style.display = 'none';
-                            document.getElementById('afterimage-question').style.display = 'block';
-                        }, 3000);
-                    }
-                }, 1000);
+
+            // Load the iframe src only when the quiz is shown
+            if (quizId === 'fakeCafeWallQuiz') {
+                document.getElementById('fakeCafeWall-quiz-iframe').src = '../fakecafewall/index.html';
+            } else if (quizId === 'pogendorffQuiz') {
+                document.getElementById('pogendorff-quiz-iframe').src = '../pogendorff/index.html';
+            } else if (quizId === 'silencingQuiz') {
+                document.getElementById('silencing-quiz-iframe').src = '../silencing/index.html';
+            } else if (quizId === 'afterimageQuiz') {
+                // This quiz is custom HTML, so it just needs to be shown
+                startAfterimageTimer();
             }
         }
-        
-        function quizAnswer(quizName, answer) {
-            let isCorrect = false;
-            let exhibitId = null;
+
+        // Renamed from the old showGate() timer logic
+        function startAfterimageTimer() {
+            let countdown = 20;
+            const timer = document.getElementById('afterimage-timer');
             
-            // Check answers for each quiz
-            switch(quizName) {
-                case 'afterimage':
-                    isCorrect = (answer === 'red-blue-white');
-                    exhibitId = 'amesRoom';
-                    break;
-                case 'poggendorff':
-                    isCorrect = (answer === 'red');
-                    exhibitId = 'cafeWall';
-                    break;
-                case 'ebbinghaus':
-                    isCorrect = (answer === 'yes');
-                    exhibitId = 'walkingFeet';
-                    break;
-                case 'squint':
-                    isCorrect = (answer === 'colors');
-                    exhibitId = 'amesWindow';
-                    break;
-            }
-            
-            if (isCorrect && exhibitId) {
-                // Mark quiz as passed
-                exhibitState[exhibitId].quizPassed = true;
+            const interval = setInterval(() => {
+                countdown--;
+                timer.textContent = countdown;
                 
-                // Hide quiz overlay
-                const quizOverlay = document.getElementById(exhibitState[exhibitId].quizId + '-overlay');
-                if (quizOverlay) {
-                    quizOverlay.classList.remove('active');
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    document.getElementById('afterimage-content').style.display = 'none';
+                    document.getElementById('afterimage-white-screen').style.display = 'block';
+                    
+                    setTimeout(() => {
+                        document.getElementById('afterimage-white-screen').style.display = 'none';
+                        document.getElementById('afterimage-question').style.display = 'block';
+                    }, 3000);
                 }
-                
-                // Reset afterimage quiz elements
-                if (quizName === 'afterimage') {
+            }, 1000);
+        }
+        
+        // Keep the afterimage quiz handler since it's still custom HTML
+        function quizAnswer(quizName, answer) {
+            if (quizName === 'afterimage') {
+                if (answer === 'red-blue-white') {
+                    // Mark quiz as passed
+                    exhibitState.amesRoom.quizPassed = true;
+                    
+                    // Hide quiz overlay
+                    document.getElementById('afterimageQuiz-overlay').classList.remove('active');
+                    
+                    // Reset afterimage quiz elements
                     document.getElementById('afterimage-content').style.display = 'block';
                     document.getElementById('afterimage-white-screen').style.display = 'none';
                     document.getElementById('afterimage-question').style.display = 'none';
                     document.getElementById('afterimage-timer').textContent = '20';
+                    
+                    alert('Correct! The exhibit is now unlocked!');
+                    showMainIllusion('amesRoom');
+                } else {
+                    alert('Incorrect! The afterimage shows complementary colors: Red, Blue & White. Try again!');
                 }
-                
-                // Show success message and main illusion
-                alert('Correct! The exhibit is now unlocked!');
-                showMainIllusion(exhibitId);
-                
-            } else {
-                // Wrong answer
-                let hint = '';
-                switch(quizName) {
-                    case 'afterimage':
-                        hint = 'The afterimage shows complementary colors: Red, Blue & White.';
-                        break;
-                    case 'poggendorff':
-                        hint = 'Look carefully - the red line is actually continuous with the black line.';
-                        break;
-                    case 'ebbinghaus':
-                        hint = 'Despite appearances, both orange circles are exactly the same size!';
-                        break;
-                    case 'squint':
-                        hint = 'Only the colors are rotating - the structure itself is static.';
-                        break;
-                }
-                alert('Incorrect! ' + hint + ' Try again!');
             }
         }
         

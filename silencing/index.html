@@ -181,6 +181,11 @@
             }
             
             render();
+            
+            // Send a message to the parent window when the circles are hidden
+            if (!surroundingVisible) {
+                window.parent.postMessage({ quizPassed: 'amesWindow' }, '*');
+            }
         });
 
         // ===== Static Render =====

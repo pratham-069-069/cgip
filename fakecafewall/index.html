@@ -257,6 +257,9 @@
 				<button id="gridButton">Show Grid</button>
 				<button id="animateButton">Animate</button>
 			</div>
+			
+			<!-- Pass Quiz Button -->
+			<button id="passQuizBtn" style="background-color: #ff4500; color: white; width: 100%; padding: 10px; margin-top: 10px; font-weight: bold;">I understand the trick!</button>
 		</div>
 
 		<!-- Info Panel -->
@@ -654,6 +657,12 @@
 
 				// --- Window Resize ---
 				window.addEventListener("resize", onWindowResize);
+
+				// --- Pass Quiz Button ---
+				document.getElementById("passQuizBtn").addEventListener("click", () => {
+					// Send a message to the parent window (game/index.html)
+					window.parent.postMessage({ quizPassed: 'cafeWall' }, '*');
+				});
 
 				// --- Initial Draw ---
 				needsRedraw = true;

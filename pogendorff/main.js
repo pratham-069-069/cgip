@@ -116,6 +116,11 @@ revealButton.addEventListener('click', () => {
     revealButton.textContent = 'Reveal Illusion';
   }
   render();
+  
+  // Send a message to the parent window when the illusion is revealed
+  if (connectingLine.visible) {
+    window.parent.postMessage({ quizPassed: 'walkingFeet' }, '*');
+  }
 });
 
 
