@@ -6,6 +6,8 @@
     <title>Illusion Museum - Advanced 3D Experience</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * {
@@ -457,6 +459,12 @@
             // Add atmospheric elements
             createAtmosphere();
             createGrandEntrance();
+            
+            // Add new decorative elements
+            createCeiling();
+            createWallArt();
+            createFloorPattern();
+            createChandelier();
         }
         
         function createWalls() {
@@ -698,6 +706,246 @@
             rightColumn.position.set(6, 5, 20);
             rightColumn.castShadow = true;
             scene.add(rightColumn);
+            
+            // Add 3D text on back wall
+            createWelcomeText();
+        }
+        
+        function createWelcomeText() {
+            // Load font and create 3D text
+            const loader = new THREE.FontLoader();
+            loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
+                // Define the three lines of text with larger sizes
+                const lines = [
+                    { text: 'WELCOME TO THE ILLUSION MUSEUM', size: 1.2, y: 9 },
+                    { text: 'A Hybrid 2D/3D Experience', size: 0.8, y: 7 },
+                    
+                ];
+                
+                // Create glossy white material
+                const textMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xffffff,
+                    emissive: 0xffffff,
+                    emissiveIntensity: 0.5,
+                    shininess: 150,
+                    specular: 0xffffff,
+                    reflectivity: 1
+                });
+                
+                // Create each line of text
+                lines.forEach(line => {
+                    const textGeometry = new THREE.TextGeometry(line.text, {
+                        font: font,
+                        size: line.size,
+                        height: 0.5,
+                        curveSegments: 12,
+                        bevelEnabled: true,
+                        bevelThickness: 0.1,
+                        bevelSize: 0.08,
+                        bevelOffset: 0,
+                        bevelSegments: 5
+                    });
+                    
+                    // Center the text geometry
+                    textGeometry.computeBoundingBox();
+                    const centerOffset = -0.5 * (textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x);
+                    
+                    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                    textMesh.position.set(centerOffset, line.y, -24.3);
+                    textMesh.castShadow = true;
+                    textMesh.receiveShadow = true;
+                    scene.add(textMesh);
+                });
+                
+                // Add dedicated spotlight for the text
+                const textLight = new THREE.SpotLight(0xffffff, 2.0, 40, Math.PI / 4, 0.3);
+                textLight.position.set(0, 11, -20);
+                textLight.target.position.set(0, 8, -24);
+                scene.add(textLight);
+                scene.add(textLight.target);
+                
+                // Add ambient light boost for text visibility
+                const textAmbient = new THREE.PointLight(0xffffff, 1.0, 30);
+                textAmbient.position.set(0, 9, -22);
+                scene.add(textAmbient);
+            });
+        }
+        
+        function createCeiling() {
+            // Decorative ceiling with panels
+            const ceilingGeometry = new THREE.PlaneGeometry(50, 50);
+            const ceilingMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x444444,
+                side: THREE.DoubleSide
+            });
+            const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.y = 12;
+            ceiling.receiveShadow = true;
+            scene.add(ceiling);
+            
+            // Ceiling molding/trim
+            const moldingGeometry = new THREE.BoxGeometry(50, 0.3, 0.3);
+            const moldingMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xcccccc,
+                shininess: 80
+            });
+            
+            // Add molding around ceiling edges
+            const positions = [
+                [0, 11.85, -25],
+                [0, 11.85, 25],
+                [-25, 11.85, 0],
+                [25, 11.85, 0]
+            ];
+            const rotations = [0, 0, Math.PI / 2, Math.PI / 2];
+            
+            positions.forEach((pos, i) => {
+                const molding = new THREE.Mesh(moldingGeometry, moldingMaterial);
+                molding.position.set(pos[0], pos[1], pos[2]);
+                molding.rotation.y = rotations[i];
+                scene.add(molding);
+            });
+        }
+        
+        function createWallArt() {
+            // Add decorative frames on side walls
+            const framePositions = [
+                // Left wall
+                { x: -24.5, y: 6, z: -10, rotation: Math.PI / 2, color: 0x8B4513 },
+                { x: -24.5, y: 6, z: 10, rotation: Math.PI / 2, color: 0x8B4513 },
+                // Right wall
+                { x: 24.5, y: 6, z: -10, rotation: -Math.PI / 2, color: 0x8B4513 },
+                { x: 24.5, y: 6, z: 10, rotation: -Math.PI / 2, color: 0x8B4513 }
+            ];
+            
+            framePositions.forEach(frameData => {
+                // Ornate frame
+                const frameGeometry = new THREE.BoxGeometry(4, 5, 0.2);
+                const frameMaterial = new THREE.MeshPhongMaterial({ 
+                    color: frameData.color,
+                    shininess: 60
+                });
+                const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+                frame.position.set(frameData.x, frameData.y, frameData.z);
+                frame.rotation.y = frameData.rotation;
+                frame.castShadow = true;
+                scene.add(frame);
+                
+                // Inner canvas with gradient
+                const canvasGeometry = new THREE.PlaneGeometry(3.5, 4.5);
+                const canvasMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x1a1a2e
+                });
+                const canvas = new THREE.Mesh(canvasGeometry, canvasMaterial);
+                canvas.position.set(frameData.x + (frameData.rotation > 0 ? -0.1 : 0.1), frameData.y, frameData.z);
+                canvas.rotation.y = frameData.rotation;
+                scene.add(canvas);
+            });
+        }
+        
+        function createFloorPattern() {
+            // Add decorative floor tiles in center
+            const tileSize = 2;
+            const colors = [0x666666, 0x888888];
+            
+            for (let x = -4; x <= 4; x += tileSize) {
+                for (let z = -4; z <= 4; z += tileSize) {
+                    const colorIndex = ((x + z) / tileSize) % 2 === 0 ? 0 : 1;
+                    const tileGeometry = new THREE.PlaneGeometry(tileSize - 0.1, tileSize - 0.1);
+                    const tileMaterial = new THREE.MeshLambertMaterial({ 
+                        color: colors[colorIndex],
+                        shininess: 80
+                    });
+                    const tile = new THREE.Mesh(tileGeometry, tileMaterial);
+                    tile.rotation.x = -Math.PI / 2;
+                    tile.position.set(x, 0.01, z);
+                    tile.receiveShadow = true;
+                    scene.add(tile);
+                }
+            }
+            
+            // Add red carpet runner from entrance
+            const carpetGeometry = new THREE.PlaneGeometry(4, 15);
+            const carpetMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x8B0000,
+                transparent: true,
+                opacity: 0.8
+            });
+            const carpet = new THREE.Mesh(carpetGeometry, carpetMaterial);
+            carpet.rotation.x = -Math.PI / 2;
+            carpet.position.set(0, 0.02, 12);
+            carpet.receiveShadow = true;
+            scene.add(carpet);
+        }
+        
+        function createChandelier() {
+            // Central chandelier
+            const chandelierGroup = new THREE.Group();
+            
+            // Main body - crystal sphere
+            const bodyGeometry = new THREE.SphereGeometry(1, 16, 16);
+            const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffffff,
+                emissive: 0xffff99,
+                emissiveIntensity: 0.5,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.9
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            chandelierGroup.add(body);
+            
+            // Hanging chain
+            const chainGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+            const chainMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x666666,
+                shininess: 80
+            });
+            const chain = new THREE.Mesh(chainGeometry, chainMaterial);
+            chain.position.y = 2;
+            chandelierGroup.add(chain);
+            
+            // Decorative arms with lights
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                const armGeometry = new THREE.CylinderGeometry(0.08, 0.08, 2, 8);
+                const arm = new THREE.Mesh(armGeometry, chainMaterial);
+                arm.position.x = Math.cos(angle) * 1.5;
+                arm.position.z = Math.sin(angle) * 1.5;
+                arm.position.y = -0.5;
+                arm.rotation.z = Math.PI / 3;
+                arm.rotation.y = angle;
+                chandelierGroup.add(arm);
+                
+                // Light bulbs
+                const bulbGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+                const bulbMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xffff99,
+                    emissive: 0xffff99,
+                    emissiveIntensity: 0.8
+                });
+                const bulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+                bulb.position.x = Math.cos(angle) * 2.2;
+                bulb.position.z = Math.sin(angle) * 2.2;
+                bulb.position.y = -1.3;
+                chandelierGroup.add(bulb);
+                
+                // Point light for each bulb
+                const pointLight = new THREE.PointLight(0xffffcc, 0.5, 15);
+                pointLight.position.copy(bulb.position);
+                chandelierGroup.add(pointLight);
+            }
+            
+            chandelierGroup.position.set(0, 9.5, 0);
+            chandelierGroup.castShadow = true;
+            scene.add(chandelierGroup);
+            
+            // Main chandelier light
+            const mainLight = new THREE.PointLight(0xffffcc, 1.5, 40);
+            mainLight.position.set(0, 9, 0);
+            mainLight.castShadow = true;
+            scene.add(mainLight);
         }
         
         function animate() {
