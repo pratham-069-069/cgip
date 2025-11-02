@@ -102,9 +102,34 @@ window.addEventListener('resize', () => {
   render();
 });
 
-// ===== Event Listener for Reveal Button =====
+// ===== Event Listener for Answer Buttons =====
+const redButton = document.getElementById('redBtn');
+const blueButton = document.getElementById('blueBtn');
+const quizSection = document.getElementById('quizSection');
+const feedbackSection = document.getElementById('feedbackSection');
+const feedbackText = document.getElementById('feedbackText');
 const revealButton = document.getElementById('revealBtn');
 
+redButton.addEventListener('click', () => answerQuestion('red'));
+blueButton.addEventListener('click', () => answerQuestion('blue'));
+
+function answerQuestion(answer) {
+  // Hide quiz buttons
+  quizSection.style.display = 'none';
+  
+  // Show feedback
+  feedbackSection.style.display = 'block';
+  
+  if (answer === 'red') {
+    feedbackText.innerHTML = '✅ <span style="color: green;">CORRECT!</span> The black line connects to the RED line!';
+    feedbackText.style.color = 'green';
+  } else {
+    feedbackText.innerHTML = '❌ <span style="color: red;">INCORRECT!</span> The black line actually connects to the RED line, not blue!';
+    feedbackText.style.color = 'red';
+  }
+}
+
+// ===== Event Listener for Reveal Button =====
 revealButton.addEventListener('click', () => {
   if (bar.material.opacity === 1.0) {
     bar.material.opacity = 0.2;

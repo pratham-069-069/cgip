@@ -280,6 +280,7 @@
 
         <!-- Poggendorff Quiz (for Walking Feet exhibit) -->
         <div id="poggendorffQuiz-overlay" class="overlay">
+            <button class="return-btn" onclick="closePoggendorffQuiz()">← Return to Museum</button>
             <iframe id="pogendorff-quiz-iframe" style="width: 90vw; height: 90vh; border: none; background: white;"></iframe>
         </div>
 
@@ -1202,6 +1203,20 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function closePoggendorffQuiz() {
+            const overlay = document.getElementById('poggendorffQuiz-overlay');
+            overlay.classList.remove('active');
+            
+            // Clear iframe
+            const iframe = document.getElementById('pogendorff-quiz-iframe');
+            if (iframe) {
+                iframe.src = '';
+            }
+            
+            isPaused = false;
+            controls.lock();
         }
         
         // Initialize the application

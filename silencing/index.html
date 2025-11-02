@@ -53,7 +53,7 @@
         #revealBtn {
             margin-top: 10px;
             padding: 8px 16px;
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
@@ -63,21 +63,55 @@
         }
 
         #revealBtn:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
 
         #revealBtn:active {
-            background-color: #004085;
+            background-color: #1e7e34;
+        }
+
+        .answer-btn {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: transform 0.2s, opacity 0.3s;
+            flex: 1;
+        }
+
+        .answer-btn:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+
+        .answer-btn:active {
+            transform: scale(0.98);
         }
     </style>
 </head>
 <body>
     <div id="info">
-        <h1>Ebbinghaus Illusion</h1>
-        <p><strong>The two orange circles are EXACTLY the same size!</strong></p>
-        <p>The left circle appears <strong>smaller</strong> because it's surrounded by large circles.</p>
-        <p>The right circle appears <strong>larger</strong> because it's surrounded by small circles.</p>
-        <button id="revealBtn">Hide Surrounding Circles</button>
+        <h1>Ebbinghaus Illusion Quiz</h1>
+        <p>The left circle is surrounded by <strong>large circles</strong>.</p>
+        <p>The right circle is surrounded by <strong>small circles</strong>.</p>
+        
+        <!-- Quiz Section -->
+        <div id="quizSection">
+            <p style="font-weight: bold; margin-top: 15px; font-size: 16px;">Are the two orange circles the same size?</p>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="yesBtn" class="answer-btn" style="background-color: #28a745;">✓ YES</button>
+                <button id="noBtn" class="answer-btn" style="background-color: #dc3545;">✗ NO</button>
+            </div>
+        </div>
+        
+        <!-- Feedback Section (hidden initially) -->
+        <div id="feedbackSection" style="display: none;">
+            <p id="feedbackText" style="font-weight: bold; margin-top: 15px; font-size: 16px;"></p>
+            <button id="revealBtn">👁️ Reveal Truth</button>
+        </div>
     </div>
     <canvas id="c"></canvas>
     
@@ -164,28 +198,86 @@
         }
 
         // ===== Reveal Button Functionality =====
-        let surroundingVisible = true;
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const quizSection = document.getElementById('quizSection');
+        const feedbackSection = document.getElementById('feedbackSection');
+        const feedbackText = document.getElementById('feedbackText');
         const revealBtn = document.getElementById('revealBtn');
+        
+        let animationInProgress = false;
 
-        revealBtn.addEventListener('click', () => {
-            surroundingVisible = !surroundingVisible;
+        // Answer button handlers
+        yesBtn.addEventListener('click', () => answerQuestion('yes'));
+        noBtn.addEventListener('click', () => answerQuestion('no'));
+
+        function answerQuestion(answer) {
+            // Hide quiz buttons
+            quizSection.style.display = 'none';
             
+            // Show feedback
+            feedbackSection.style.display = 'block';
+            
+            if (answer === 'yes') {
+                feedbackText.innerHTML = '✅ <span style="color: green;">CORRECT!</span> The two orange circles are exactly the same size!';
+                feedbackText.style.color = 'green';
+            } else {
+                feedbackText.innerHTML = '❌ <span style="color: red;">INCORRECT!</span> The two orange circles are actually the same size!';
+                feedbackText.style.color = 'red';
+            }
+        }
+
+        // Reveal button - animate circles side by side
+        revealBtn.addEventListener('click', () => {
+            if (animationInProgress) return;
+            
+            animationInProgress = true;
+            revealBtn.disabled = true;
+            revealBtn.textContent = 'Revealing...';
+            
+            // Hide surrounding circles first
             surroundingCircles.forEach(circle => {
-                circle.visible = surroundingVisible;
+                circle.visible = false;
             });
             
-            if (surroundingVisible) {
-                revealBtn.textContent = 'Hide Surrounding Circles';
-            } else {
-                revealBtn.textContent = 'Show Surrounding Circles';
+            // Animate both circles to center, side by side
+            const targetLeftX = -1.5;
+            const targetRightX = 1.5;
+            const startLeftX = leftCentralCircle.position.x;
+            const startRightX = rightCentralCircle.position.x;
+            
+            let progress = 0;
+            const duration = 1500; // 1.5 seconds
+            const startTime = Date.now();
+            
+            function animateCircles() {
+                const currentTime = Date.now();
+                const elapsed = currentTime - startTime;
+                progress = Math.min(elapsed / duration, 1);
+                
+                // Ease-in-out function
+                const eased = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : -1 + (4 - 2 * progress) * progress;
+                
+                // Move circles
+                leftCentralCircle.position.x = startLeftX + (targetLeftX - startLeftX) * eased;
+                rightCentralCircle.position.x = startRightX + (targetRightX - startRightX) * eased;
+                
+                render();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateCircles);
+                } else {
+                    revealBtn.textContent = '✓ Revealed!';
+                    revealBtn.style.background = '#6c757d';
+                    
+                    // Send message to parent window
+                    window.parent.postMessage({ quizPassed: 'amesWindow' }, '*');
+                }
             }
             
-            render();
-            
-            // Send a message to the parent window when the circles are hidden
-            if (!surroundingVisible) {
-                window.parent.postMessage({ quizPassed: 'amesWindow' }, '*');
-            }
+            animateCircles();
         });
 
         // ===== Static Render =====

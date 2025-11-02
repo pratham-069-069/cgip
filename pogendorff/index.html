@@ -8,10 +8,24 @@
 </head>
 <body>
     <div id="info">
-        <h1>Poggendorff Illusion</h1>
+        <h1>Poggendorff Illusion Quiz</h1>
         <p>The diagonal lines appear misaligned when interrupted by the grey bar,</p>
         <p>but they are actually perfectly collinear!</p>
-        <button id="revealBtn">Reveal Illusion</button>
+        
+        <!-- Quiz Section -->
+        <div id="quizSection">
+            <p style="font-weight: bold; margin-top: 15px; font-size: 16px;">Which colored line does the BLACK diagonal line connect to?</p>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="redBtn" class="answer-btn" style="background-color: #cc0000;">🔴 RED (Lower)</button>
+                <button id="blueBtn" class="answer-btn" style="background-color: #0000ff;">🔵 BLUE (Upper)</button>
+            </div>
+        </div>
+        
+        <!-- Feedback Section (hidden initially) -->
+        <div id="feedbackSection" style="display: none;">
+            <p id="feedbackText" style="font-weight: bold; margin-top: 15px; font-size: 16px;"></p>
+            <button id="revealBtn">👁️ Reveal Truth</button>
+        </div>
     </div>
     <canvas id="c"></canvas>
     
