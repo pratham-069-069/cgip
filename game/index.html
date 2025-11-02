@@ -983,8 +983,8 @@
             direction.x = Number(movement.right) - Number(movement.left);
             direction.normalize();
             
-            if (movement.forward || movement.backward) velocity.z -= direction.z * 20.0 * delta;
-            if (movement.left || movement.right) velocity.x -= direction.x * 20.0 * delta;
+            if (movement.forward || movement.backward) velocity.z -= direction.z * 80.0 * delta;
+            if (movement.left || movement.right) velocity.x -= direction.x * 40.0 * delta;
             
             controls.moveRight(-velocity.x * delta);
             controls.moveForward(-velocity.z * delta);
