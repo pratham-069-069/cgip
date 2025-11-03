@@ -1043,9 +1043,9 @@
             if (overlay) {
                 overlay.classList.add('active');
                 
-                // Load iframe content
+                // Load iframe content (always reload to ensure it works after returning)
                 const iframe = document.getElementById(id + '-iframe');
-                if (iframe && !iframe.src) {
+                if (iframe) {
                     switch(id) {
                         case 'cafeWall':
                             iframe.src = '../cafewall/index.html';
@@ -1054,7 +1054,7 @@
                             iframe.src = '../feet/index.html';
                             break;
                         case 'amesWindow':
-                            iframe.src = '../window/index.html';
+                            iframe.src = '../ameswindow/index.html';
                             break;
                     }
                 }

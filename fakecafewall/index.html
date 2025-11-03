@@ -101,6 +101,26 @@
 				border-color: #5aa;
 			}
 
+			.answer-btn {
+				padding: 10px 20px;
+				color: white;
+				border: none;
+				border-radius: 5px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: bold;
+				transition: transform 0.2s, opacity 0.3s;
+			}
+
+			.answer-btn:hover {
+				transform: scale(1.05);
+				opacity: 0.9;
+			}
+
+			.answer-btn:active {
+				transform: scale(0.98);
+			}
+
 			/* Info Panel */
 			#info-panel {
 				position: absolute;
@@ -168,102 +188,26 @@
 
 		<!-- UI Panel for Controls -->
 		<div id="ui-panel">
-			<h2>Café Wall Illusion</h2>
-			<!-- Offset Slider -->
-			<div class="slider-group">
-				<label
-					>Horizontal Offset
-					<span id="offset-value">0.50</span></label
-				>
-				<input
-					type="range"
-					id="offsetSlider"
-					min="0"
-					max="1"
-					step="0.01"
-					value="0.5" />
-			</div>
-			<!-- Line Thickness Slider -->
-			<div class="slider-group">
-				<label
-					>Line Thickness
-					<span id="thickness-value">2</span></label
-				>
-				<input
-					type="range"
-					id="thicknessSlider"
-					min="0"
-					max="10"
-					step="1"
-					value="2" />
-			</div>
-			<!-- Line Grayness Slider -->
-			<div class="slider-group">
-				<label
-					>Line Grayness <span id="gray-value">128</span></label
-				>
-				<input
-					type="range"
-					id="graySlider"
-					min="0"
-					max="255"
-					step="1"
-					value="128" />
-			</div>
-			<!-- Brick Width Slider -->
-			<div class="slider-group">
-				<label
-					>Brick Width <span id="width-value">40</span></label
-				>
-				<input
-					type="range"
-					id="widthSlider"
-					min="20"
-					max="80"
-					step="1"
-					value="40" />
-			</div>
-			<!-- Brick Height Slider -->
-			<div class="slider-group">
-				<label
-					>Brick Height <span id="height-value">30</span></label
-				>
-				<input
-					type="range"
-					id="heightSlider"
-					min="15"
-					max="50"
-					step="1"
-					value="30" />
+			<h2>Café Wall Illusion Quiz</h2>
+			
+			<!-- Quiz Section -->
+			<div id="quizSection">
+				<p style="font-weight: bold; margin-top: 15px; font-size: 16px;">Are the horizontal lines parallel?</p>
+				<div style="display: flex; gap: 10px; margin-top: 10px;">
+					<button id="yesBtn" class="answer-btn" style="background-color: #28a745; width: 100%;">✓ YES</button>
+					<button id="noBtn" class="answer-btn" style="background-color: #dc3545; width: 100%;">✗ NO</button>
+				</div>
 			</div>
 			
-			<!-- NEW: Actual Slant Slider -->
-			<div class="slider-group">
-				<label
-					>Actual Slant <span id="slant-value">0.05</span></label
-				>
-				<input
-					type="range"
-					id="slantSlider"
-					min="-0.1"
-					max="0.1"
-					step="0.01"
-					value="0.05" />
+			<!-- Feedback Section (hidden initially) -->
+			<div id="feedbackSection" style="display: none;">
+				<p id="feedbackText" style="font-weight: bold; margin-top: 15px; font-size: 16px;"></p>
+				<button id="revealBtn" style="background-color: #28a745; color: white; width: 100%; padding: 10px; margin-top: 10px; font-weight: bold;">👁️ Reveal Truth</button>
 			</div>
-
-			<!-- Control Buttons -->
-			<div class="button-group">
-				<button id="revealButton">Show Lines</button>
-				<button id="gridButton">Show Grid</button>
-				<button id="animateButton">Animate</button>
-			</div>
-			
-			<!-- Pass Quiz Button -->
-			<button id="passQuizBtn" style="background-color: #ff4500; color: white; width: 100%; padding: 10px; margin-top: 10px; font-weight: bold;">I understand the trick!</button>
 		</div>
 
-		<!-- Info Panel -->
-		<div id="info-panel">
+		<!-- Info Panel - HIDDEN -->
+		<div id="info-panel" style="display: none;">
 			<h3>🧱 Café Wall Illusion</h3>
 			<p>
 				The horizontal lines appear slanted... but are they *really* straight?
@@ -276,8 +220,8 @@
 			</ul>
 		</div>
 
-		<!-- Illusion Strength Meter -->
-		<div id="strength-meter">
+		<!-- Illusion Strength Meter - HIDDEN -->
+		<div id="strength-meter" style="display: none;">
 			<label>Illusion Strength:</label>
 			<div id="strength-bar-container">
 				<div id="strength-bar"></div>
@@ -305,28 +249,12 @@
 			let patternGroup, gridGroup, refLinesGroup;
 
 			// --- UI Element References ---
-			const sliders = {
-				offset: document.getElementById("offsetSlider"),
-				thickness: document.getElementById("thicknessSlider"),
-				gray: document.getElementById("graySlider"),
-				width: document.getElementById("widthSlider"),
-				height: document.getElementById("heightSlider"),
-				slant: document.getElementById("slantSlider"), // <-- NEW
-			};
-			const values = {
-				offset: document.getElementById("offset-value"),
-				thickness: document.getElementById("thickness-value"),
-				gray: document.getElementById("gray-value"),
-				width: document.getElementById("width-value"),
-				height: document.getElementById("height-value"),
-				slant: document.getElementById("slant-value"), // <-- NEW
-			};
-			const buttons = {
-				reveal: document.getElementById("revealButton"),
-				grid: document.getElementById("gridButton"),
-				animate: document.getElementById("animateButton"),
-			};
-			const strengthBar = document.getElementById("strength-bar");
+			const yesBtn = document.getElementById("yesBtn");
+			const noBtn = document.getElementById("noBtn");
+			const revealBtn = document.getElementById("revealBtn");
+			const quizSection = document.getElementById("quizSection");
+			const feedbackSection = document.getElementById("feedbackSection");
+			const feedbackText = document.getElementById("feedbackText");
 
 			// --- State Variables ---
 			const config = {
@@ -335,12 +263,13 @@
 				gray: 128,
 				width: 40,
 				height: 30,
-				slant: 0.05, // <-- NEW: Default slant
+				slant: 0.05, // Lines are NOT parallel - they have a slant
 			};
 			let showReferenceLines = false;
 			let showGridLines = false;
 			let animationMode = false;
-			let needsRedraw = false; 
+			let needsRedraw = false;
+			let bricksVisible = true;  // New variable to control brick visibility 
 
 			// --- Materials (re-used to save memory) ---
 			const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
@@ -391,21 +320,20 @@
 			 */
 			function drawCafeWallPattern() {
 				clearGroup(patternGroup);
+				
+				// If bricks are hidden (after reveal), don't draw bricks or lines
+				if (!bricksVisible) {
+					// Only draw the slanted reference lines to show they're not parallel
+					drawReferenceLines();
+					return;
+				}
 
 				// Get config values
 				let offsetRatio = parseFloat(config.offset);
 				const lineThickness = parseFloat(config.thickness);
 				const brickWidth = parseFloat(config.width);
 				const brickHeight = parseFloat(config.height);
-				const slantFactor = parseFloat(config.slant); // <-- NEW
-
-				// Handle animation
-				if (animationMode) {
-					const time = clock.getElapsedTime();
-					offsetRatio = 0.5 + 0.3 * Math.sin(time * 2);
-					sliders.offset.value = offsetRatio;
-					values.offset.textContent = offsetRatio.toFixed(2);
-				}
+				const slantFactor = parseFloat(config.slant);
 
 				// Set line color
 				const grayVal = parseInt(config.gray) / 255;
@@ -613,56 +541,13 @@
 				refLinesGroup = new THREE.Group();
 				scene.add(patternGroup, gridGroup, refLinesGroup);
 
-				// --- Event Listeners for UI ---
-				for (const key in sliders) {
-					sliders[key].addEventListener("input", (e) => {
-						config[key] = e.target.value;
-						if (key === "offset" || key === "slant") { // <-- UPDATED
-							values[key].textContent = parseFloat(
-								config[key]
-							).toFixed(2);
-						} else {
-							values[key].textContent = config[key];
-						}
-						needsRedraw = true;
-					});
-				}
-
-				buttons.reveal.addEventListener("click", () => {
-					showReferenceLines = !showReferenceLines;
-					buttons.reveal.textContent = showReferenceLines
-						? "Hide Lines"
-						: "Show Lines";
-					buttons.reveal.classList.toggle("active", showReferenceLines);
-					needsRedraw = true;
-				});
-
-				buttons.grid.addEventListener("click", () => {
-					showGridLines = !showGridLines;
-					buttons.grid.textContent = showGridLines
-						? "Hide Grid"
-						: "Show Grid";
-					buttons.grid.classList.toggle("active", showGridLines);
-					needsRedraw = true;
-				});
-
-				buttons.animate.addEventListener("click", () => {
-					animationMode = !animationMode;
-					buttons.animate.textContent = animationMode
-						? "Stop"
-						: "Animate";
-					buttons.animate.classList.toggle("active", animationMode);
-					needsRedraw = true;
-				});
+				// --- Quiz Event Listeners ---
+				yesBtn.addEventListener("click", () => answerQuestion('yes'));
+				noBtn.addEventListener("click", () => answerQuestion('no'));
+				revealBtn.addEventListener("click", revealTruth);
 
 				// --- Window Resize ---
 				window.addEventListener("resize", onWindowResize);
-
-				// --- Pass Quiz Button ---
-				document.getElementById("passQuizBtn").addEventListener("click", () => {
-					// Send a message to the parent window (game/index.html)
-					window.parent.postMessage({ quizPassed: 'cafeWall' }, '*');
-				});
 
 				// --- Initial Draw ---
 				needsRedraw = true;
@@ -689,24 +574,52 @@
 			}
 
 			/**
+			 * Quiz Functions
+			 */
+			function answerQuestion(answer) {
+				// Hide quiz buttons
+				quizSection.style.display = 'none';
+				
+				// Show feedback
+				feedbackSection.style.display = 'block';
+				
+				if (answer === 'no') {
+					feedbackText.innerHTML = '✅ <span style="color: green;">CORRECT!</span> The horizontal lines are NOT parallel!';
+					feedbackText.style.color = 'green';
+				} else {
+					feedbackText.innerHTML = '❌ <span style="color: red;">INCORRECT!</span> The lines are actually NOT parallel - they have a slight slant!';
+					feedbackText.style.color = 'red';
+				}
+			}
+
+			function revealTruth() {
+				// Hide all bricks and mortar lines
+				bricksVisible = false;
+				showReferenceLines = true;
+				needsRedraw = true;
+				
+				// Update button
+				revealBtn.textContent = '✓ Revealed!';
+				revealBtn.style.background = '#6c757d';
+				revealBtn.disabled = true;
+				
+				// Send message to parent window
+				setTimeout(() => {
+					window.parent.postMessage({ quizPassed: 'cafeWall' }, '*');
+				}, 500);
+			}
+
+			/**
 			 * Main Animation Loop
 			 */
 			function animate() {
 				requestAnimationFrame(animate);
 
-				if (animationMode) {
-					needsRedraw = true;
-				}
-
 				if (needsRedraw) {
 					drawCafeWallPattern();
 					drawGridLines();
 					drawReferenceLines();
-					updateStrengthMeter();
-
-					if (!animationMode) {
-						needsRedraw = false;
-					}
+					needsRedraw = false;
 				}
 
 				renderer.render(scene, camera);
