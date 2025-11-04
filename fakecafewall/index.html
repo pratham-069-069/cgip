@@ -246,7 +246,7 @@
 
 			// --- Global Variables ---
 			let scene, camera, renderer, clock;
-			let patternGroup, gridGroup, refLinesGroup, cyanLinesGroup;
+			let patternGroup, gridGroup, cyanLinesGroup;
 
 			// --- UI Element References ---
 			const yesBtn = document.getElementById("yesBtn");
@@ -270,10 +270,26 @@
 			let animationMode = false;
 			let needsRedraw = false;
 			let bricksVisible = true;  // New variable to control brick visibility 
+			
+			// Animation variables
+			let isAnimating = false;
+			let animationStartTime = 0;
+			let animationDuration = 1000; // 1 second for fade animation
+			let brickOpacity = 1.0;
+			let lineColorProgress = 0; // 0 = gray, 1 = red
+			let cyanOpacity = 0;
 
 			// --- Materials (re-used to save memory) ---
-			const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-			const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+			const blackMat = new THREE.MeshBasicMaterial({ 
+				color: 0x000000,
+				transparent: true,
+				opacity: 1
+			});
+			const whiteMat = new THREE.MeshBasicMaterial({ 
+				color: 0xffffff,
+				transparent: true,
+				opacity: 1
+			});
 			const lineMat = new THREE.MeshBasicMaterial({ color: 0x808080 });
 			const gridMat = new THREE.LineBasicMaterial({
 				color: 0x00ff00,
@@ -287,6 +303,8 @@
 			const cyanMat = new THREE.LineBasicMaterial({
 				color: 0x00ffff,
 				linewidth: 5,
+				transparent: true,
+				opacity: 0
 			});
 
 			/**
@@ -324,13 +342,6 @@
 			 */
 			function drawCafeWallPattern() {
 				clearGroup(patternGroup);
-				
-				// If bricks are hidden (after reveal), don't draw bricks or lines
-				if (!bricksVisible) {
-					// Only draw the slanted reference lines to show they're not parallel
-					drawReferenceLines();
-					return;
-				}
 
 				// Get config values
 				let offsetRatio = parseFloat(config.offset);
@@ -339,9 +350,19 @@
 				const brickHeight = parseFloat(config.height);
 				const slantFactor = parseFloat(config.slant);
 
-				// Set line color
+				// Set line color based on animation progress
 				const grayVal = parseInt(config.gray) / 255;
-				lineMat.color.setRGB(grayVal, grayVal, grayVal);
+				const r = grayVal + (1 - grayVal) * lineColorProgress;
+				const g = grayVal * (1 - lineColorProgress);
+				const b = grayVal * (1 - lineColorProgress);
+				lineMat.color.setRGB(r, g, b);
+				
+				// Update brick material opacity
+				blackMat.opacity = brickOpacity;
+				whiteMat.opacity = brickOpacity;
+				
+				// Update cyan lines opacity
+				cyanMat.opacity = cyanOpacity;
 
 				// Define pattern boundaries
 				const patternWidth = window.innerWidth;
@@ -376,7 +397,8 @@
 						patternGroup.add(lineMesh);
 					}
 
-					// Draw bricks
+					// Draw bricks only if not revealed
+					if (!bricksVisible) continue;
 					const xOffset =
 						row % 2 === 1 ? offsetRatio * brickWidth : 0;
 
@@ -439,43 +461,6 @@
 					];
 					const geo = new THREE.BufferGeometry().setFromPoints(points);
 					gridGroup.add(new THREE.Line(geo, gridMat));
-				}
-			}
-
-			/**
-			 * Draw the red reference lines
-			 */
-			function drawReferenceLines() {
-				clearGroup(refLinesGroup);
-				refLinesGroup.visible = showReferenceLines;
-				if (!showReferenceLines) return;
-
-				const brickHeight = parseFloat(config.height);
-				const lineThickness = parseFloat(config.thickness);
-				const rowHeight = brickHeight + lineThickness;
-				const slantFactor = parseFloat(config.slant); // <-- NEW
-
-				const width = window.innerWidth;
-				const height = window.innerHeight;
-				const rows = Math.ceil(height / rowHeight);
-
-				for (let i = 0; i < rows; i++) {
-					const y =
-						height / 2 -
-						i * rowHeight -
-						brickHeight -
-						lineThickness / 2;
-					
-					// --- MODIFIED for slant ---
-					// The "proof" lines must also be slanted to match
-					const yLeft = y + (-width / 2 - 20) * slantFactor;
-					const yRight = y + (width / 2 + 20) * slantFactor;
-					const points = [
-						new THREE.Vector3(-width / 2 - 20, yLeft, 2),
-						new THREE.Vector3(width / 2 + 20, yRight, 2),
-					];
-					const geo = new THREE.BufferGeometry().setFromPoints(points);
-					refLinesGroup.add(new THREE.Line(geo, refMat));
 				}
 			}
 
@@ -575,9 +560,8 @@
 				// --- Groups for managing objects ---
 				patternGroup = new THREE.Group();
 				gridGroup = new THREE.Group();
-				refLinesGroup = new THREE.Group();
 				cyanLinesGroup = new THREE.Group();
-				scene.add(patternGroup, gridGroup, refLinesGroup, cyanLinesGroup);
+				scene.add(patternGroup, gridGroup, cyanLinesGroup);
 
 				// --- Quiz Event Listeners ---
 				yesBtn.addEventListener("click", () => answerQuestion('yes'));
@@ -631,20 +615,57 @@
 			}
 
 			function revealTruth() {
-				// Hide all bricks and mortar lines
-				bricksVisible = false;
+				// Start animation
+				isAnimating = true;
+				animationStartTime = Date.now();
 				showReferenceLines = true;
-				needsRedraw = true;
 				
 				// Update button
-				revealBtn.textContent = '✓ Revealed!';
+				revealBtn.textContent = '✓ Revealing...';
 				revealBtn.style.background = '#6c757d';
 				revealBtn.disabled = true;
 				
-				// Send message to parent window
+				// Send message to parent window after animation completes + 3 seconds
 				setTimeout(() => {
+					revealBtn.textContent = '✓ Revealed!';
 					window.parent.postMessage({ quizPassed: 'cafeWall' }, '*');
-				}, 500);
+				}, 4000); // 1 second animation + 3 seconds wait
+			}
+
+			/**
+			 * Update animation progress
+			 */
+			function updateAnimation() {
+				if (!isAnimating) return;
+				
+				const elapsed = Date.now() - animationStartTime;
+				const progress = Math.min(elapsed / animationDuration, 1);
+				
+				// Ease-in-out function for smooth animation
+				const easeProgress = progress < 0.5 
+					? 2 * progress * progress 
+					: 1 - Math.pow(-2 * progress + 2, 2) / 2;
+				
+				// Update brick opacity (fade out)
+				brickOpacity = 1 - easeProgress;
+				
+				// Update line color progress (gray to red)
+				lineColorProgress = easeProgress;
+				
+				// Update cyan opacity (fade in)
+				cyanOpacity = easeProgress;
+				
+				// Mark for redraw
+				needsRedraw = true;
+				
+				// Animation complete
+				if (progress >= 1) {
+					isAnimating = false;
+					bricksVisible = false;
+					brickOpacity = 0;
+					lineColorProgress = 1;
+					cyanOpacity = 1;
+				}
 			}
 
 			/**
@@ -652,12 +673,14 @@
 			 */
 			function animate() {
 				requestAnimationFrame(animate);
+				
+				// Update animation if running
+				updateAnimation();
 
 				if (needsRedraw) {
 					drawCafeWallPattern();
 					drawGridLines();
 					drawCyanReferenceLines();
-					drawReferenceLines();
 					needsRedraw = false;
 				}
 
