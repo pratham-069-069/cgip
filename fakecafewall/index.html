@@ -192,7 +192,7 @@
 			
 			<!-- Quiz Section -->
 			<div id="quizSection">
-				<p style="font-weight: bold; margin-top: 15px; font-size: 16px;">Are the horizontal lines parallel?</p>
+				<p style="font-weight: bold; margin-top: 15px; font-size: 16px;">Are the horizontal lines straight?</p>
 				<div style="display: flex; gap: 10px; margin-top: 10px;">
 					<button id="yesBtn" class="answer-btn" style="background-color: #28a745; width: 100%;">✓ YES</button>
 					<button id="noBtn" class="answer-btn" style="background-color: #dc3545; width: 100%;">✗ NO</button>
@@ -246,7 +246,7 @@
 
 			// --- Global Variables ---
 			let scene, camera, renderer, clock;
-			let patternGroup, gridGroup, refLinesGroup;
+			let patternGroup, gridGroup, refLinesGroup, cyanLinesGroup;
 
 			// --- UI Element References ---
 			const yesBtn = document.getElementById("yesBtn");
@@ -282,7 +282,11 @@
 			});
 			const refMat = new THREE.LineBasicMaterial({
 				color: 0xff0000,
-				linewidth: 2, 
+				linewidth: 5, 
+			});
+			const cyanMat = new THREE.LineBasicMaterial({
+				color: 0x00ffff,
+				linewidth: 5,
 			});
 
 			/**
@@ -476,6 +480,39 @@
 			}
 
 			/**
+			 * Draw straight cyan reference lines to show the actual horizontal
+			 */
+			function drawCyanReferenceLines() {
+				clearGroup(cyanLinesGroup);
+				cyanLinesGroup.visible = showReferenceLines;
+				if (!showReferenceLines) return;
+
+				const brickHeight = parseFloat(config.height);
+				const lineThickness = parseFloat(config.thickness);
+				const rowHeight = brickHeight + lineThickness;
+
+				const width = window.innerWidth;
+				const height = window.innerHeight;
+				const rows = Math.ceil(height / rowHeight);
+
+				for (let i = 0; i < rows; i++) {
+					const y =
+						height / 2 -
+						i * rowHeight -
+						brickHeight -
+						lineThickness / 2;
+					
+					// Perfectly straight horizontal cyan lines (no slant)
+					const points = [
+						new THREE.Vector3(-width / 2 - 20, y, 1.5),
+						new THREE.Vector3(width / 2 + 20, y, 1.5),
+					];
+					const geo = new THREE.BufferGeometry().setFromPoints(points);
+					cyanLinesGroup.add(new THREE.Line(geo, cyanMat));
+				}
+			}
+
+			/**
 			 * Update the illusion strength meter
 			 */
 			function updateStrengthMeter() {
@@ -539,7 +576,8 @@
 				patternGroup = new THREE.Group();
 				gridGroup = new THREE.Group();
 				refLinesGroup = new THREE.Group();
-				scene.add(patternGroup, gridGroup, refLinesGroup);
+				cyanLinesGroup = new THREE.Group();
+				scene.add(patternGroup, gridGroup, refLinesGroup, cyanLinesGroup);
 
 				// --- Quiz Event Listeners ---
 				yesBtn.addEventListener("click", () => answerQuestion('yes'));
@@ -618,6 +656,7 @@
 				if (needsRedraw) {
 					drawCafeWallPattern();
 					drawGridLines();
+					drawCyanReferenceLines();
 					drawReferenceLines();
 					needsRedraw = false;
 				}
