@@ -466,6 +466,9 @@
             createWallArt();
             createFloorPattern();
             createChandelier();
+            
+            // Add illusion information displays on side walls
+            createIllusionDisplays();
         }
         
         function createWalls() {
@@ -947,6 +950,242 @@
             mainLight.position.set(0, 9, 0);
             mainLight.castShadow = true;
             scene.add(mainLight);
+        }
+        
+        function createIllusionDisplays() {
+            const textureLoader = new THREE.TextureLoader();
+            
+            // DO NOT set crossOrigin for local files - causes CORS blocking
+            // textureLoader.crossOrigin = 'anonymous';
+            
+            // Illusion data - 3 per side wall, unique illusions not in exhibit rooms
+            // Positioned to avoid door locations (doors at z=-8 and z=8)
+            const illusions = [
+                // LEFT WALL (3 displays)
+                {
+                    name: 'Fraser Spiral Illusion',
+                    description: 'What appears to be a spiral is actually a series of concentric circles. The overlapping arcs trick our brain into perceiving a continuous spiral.',
+                    image: 'images/fraser.jpg',
+                    position: { x: -24, y: 6, z: -18 },
+                    rotation: Math.PI / 2
+                },
+                {
+                    name: 'Motion Aftereffect',
+                    description: 'Also known as the waterfall illusion. After staring at moving patterns, stationary objects appear to move in the opposite direction.',
+                    image: 'images/motion.jpg',
+                    position: { x: -24, y: 6, z: 0 },
+                    rotation: Math.PI / 2
+                },
+                {
+                    name: 'Zöllner Illusion',
+                    description: 'Parallel lines appear to converge or diverge when crossed by short diagonal lines at alternating angles, distorting our perception of parallelism.',
+                    image: 'images/zollner.jpg',
+                    position: { x: -24, y: 6, z: 18 },
+                    rotation: Math.PI / 2
+                },
+                // RIGHT WALL (3 displays)
+                {
+                    name: 'Hermann Grid Illusion',
+                    description: 'Dark ghostly spots appear at the intersections of white grid lines on a black background, but disappear when you look directly at them.',
+                    image: 'images/hermann.jpg',
+                    position: { x: 24, y: 6, z: -18 },
+                    rotation: -Math.PI / 2
+                },
+                {
+                    name: 'Rotating Snakes Illusion',
+                    description: 'Static circular patterns appear to rotate and move when viewed with peripheral vision, created by Akiyoshi Kitaoka using color contrasts.',
+                    image: 'images/snakes.jpg',
+                    position: { x: 24, y: 6, z: 0 },
+                    rotation: -Math.PI / 2
+                },
+                {
+                    name: 'Hering Illusion',
+                    description: 'Straight parallel lines appear curved when radiating lines cross them, demonstrating how context distorts our perception of straightness.',
+                    image: 'images/hering.jpg',
+                    position: { x: 24, y: 6, z: 18 },
+                    rotation: -Math.PI / 2
+                }
+            ];
+            
+            illusions.forEach(illusion => {
+                // Create wooden frame
+                const frameGroup = new THREE.Group();
+                
+                // Outer frame (dark wood)
+                const outerFrameGeometry = new THREE.BoxGeometry(5, 6, 0.3);
+                const frameMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x5C4033,
+                    shininess: 30
+                });
+                const outerFrame = new THREE.Mesh(outerFrameGeometry, frameMaterial);
+                frameGroup.add(outerFrame);
+                
+                // Inner frame border (lighter wood accent)
+                const innerBorderGeometry = new THREE.BoxGeometry(4.8, 5.8, 0.31);
+                const innerBorderMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x8B7355,
+                    shininess: 40
+                });
+                const innerBorder = new THREE.Mesh(innerBorderGeometry, innerBorderMaterial);
+                innerBorder.position.z = 0.01;
+                frameGroup.add(innerBorder);
+                
+                // Image plane with placeholder
+                const imageGeometry = new THREE.PlaneGeometry(4.5, 5.5);
+                
+                // Create placeholder texture with gradient
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                
+                // Gradient background
+                const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+                gradient.addColorStop(0, '#2c3e50');
+                gradient.addColorStop(1, '#34495e');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 512, 512);
+                
+                // Add text placeholder
+                ctx.fillStyle = '#ecf0f1';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('IMAGE', 256, 240);
+                ctx.font = '24px Arial';
+                ctx.fillText('PLACEHOLDER', 256, 280);
+                
+                const placeholderTexture = new THREE.CanvasTexture(canvas);
+                
+                // Create material with placeholder - using MeshLambertMaterial for better visibility
+                const imageMaterial = new THREE.MeshLambertMaterial({ 
+                    map: placeholderTexture,
+                    side: THREE.DoubleSide,
+                    emissive: 0x222222,
+                    emissiveIntensity: 0.2
+                });
+                
+                // Create image plane
+                const imagePlane = new THREE.Mesh(imageGeometry, imageMaterial);
+                imagePlane.position.z = 0.2; // Move slightly forward
+                frameGroup.add(imagePlane);
+                
+                // Load actual image with better handling
+                const imagePath = illusion.image;
+                console.log(`Attempting to load: ${imagePath}`);
+                
+                const img = new Image();
+                // DO NOT set crossOrigin for local file:// protocol - it causes CORS errors
+                // img.crossOrigin = 'anonymous';
+                
+                img.onload = function() {
+                    console.log(`✓ Image loaded successfully: ${illusion.name}`);
+                    console.log(`Image dimensions: ${img.width}x${img.height}`);
+                    const texture = new THREE.Texture(img);
+                    texture.needsUpdate = true;
+                    
+                    // Replace the material's texture
+                    imageMaterial.map = texture;
+                    imageMaterial.needsUpdate = true;
+                    
+                    console.log(`✓ Texture applied for ${illusion.name}`);
+                };
+                
+                img.onerror = function(err) {
+                    console.error(`✗ Failed to load image: ${imagePath}`);
+                    console.error(`Error details:`, err);
+                    console.log(`Using placeholder for ${illusion.name}`);
+                };
+                
+                img.src = imagePath;
+                
+                // Position and rotate frame
+                frameGroup.position.set(illusion.position.x, illusion.position.y, illusion.position.z);
+                frameGroup.rotation.y = illusion.rotation;
+                frameGroup.castShadow = true;
+                scene.add(frameGroup);
+                
+                // Add dedicated spotlight for this display
+                const displayLight = new THREE.SpotLight(0xffffff, 1.5, 20, Math.PI / 6, 0.5);
+                displayLight.position.set(
+                    illusion.position.x * 0.8, 
+                    illusion.position.y + 2, 
+                    illusion.position.z
+                );
+                // Create target at the frame's position (not the local imagePlane)
+                displayLight.target.position.set(illusion.position.x, illusion.position.y, illusion.position.z);
+                displayLight.castShadow = false;
+                scene.add(displayLight);
+                scene.add(displayLight.target);
+                
+                // Create nameplate below frame
+                const nameplateCanvas = document.createElement('canvas');
+                nameplateCanvas.width = 1024;
+                nameplateCanvas.height = 256;
+                const npCtx = nameplateCanvas.getContext('2d');
+                
+                // Nameplate background (brass/gold)
+                npCtx.fillStyle = '#B8860B';
+                npCtx.fillRect(0, 0, 1024, 256);
+                
+                // Border
+                npCtx.strokeStyle = '#8B6914';
+                npCtx.lineWidth = 8;
+                npCtx.strokeRect(4, 4, 1016, 248);
+                
+                // Name text
+                npCtx.fillStyle = '#000000';
+                npCtx.font = 'bold 48px Georgia';
+                npCtx.textAlign = 'center';
+                npCtx.fillText(illusion.name, 512, 85);
+                
+                // Description text (word wrap)
+                npCtx.font = '28px Arial';
+                const words = illusion.description.split(' ');
+                let line = '';
+                let y = 140;
+                const maxWidth = 950;
+                
+                words.forEach((word, index) => {
+                    const testLine = line + word + ' ';
+                    const metrics = npCtx.measureText(testLine);
+                    if (metrics.width > maxWidth && index > 0) {
+                        npCtx.fillText(line, 512, y);
+                        line = word + ' ';
+                        y += 35;
+                    } else {
+                        line = testLine;
+                    }
+                });
+                npCtx.fillText(line, 512, y);
+                
+                const nameplateTexture = new THREE.CanvasTexture(nameplateCanvas);
+                const nameplateMaterial = new THREE.MeshBasicMaterial({ 
+                    map: nameplateTexture
+                });
+                const nameplateGeometry = new THREE.PlaneGeometry(4.5, 1.2);
+                const nameplate = new THREE.Mesh(nameplateGeometry, nameplateMaterial);
+                
+                // Position nameplate below frame
+                nameplate.position.set(
+                    illusion.position.x + (illusion.rotation > 0 ? -0.3 : 0.3),
+                    illusion.position.y - 3.8,
+                    illusion.position.z
+                );
+                nameplate.rotation.y = illusion.rotation;
+                scene.add(nameplate);
+                
+                // Add spotlight for each display
+                const spotlight = new THREE.SpotLight(0xffffcc, 0.8, 15, Math.PI / 6, 0.3);
+                spotlight.position.set(
+                    illusion.position.x + (illusion.rotation > 0 ? -3 : 3),
+                    illusion.position.y + 3,
+                    illusion.position.z
+                );
+                spotlight.target.position.set(illusion.position.x, illusion.position.y, illusion.position.z);
+                spotlight.castShadow = true;
+                scene.add(spotlight);
+                scene.add(spotlight.target);
+            });
         }
         
         function animate() {
